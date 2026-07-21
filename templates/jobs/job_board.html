@@ -1,0 +1,293 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Job Board — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Custom Job Preview Popup ─────────────────────────────── */
+var jobPopupOverlay, jobPopupBody, jobPopupCurrentPk;
+
+function badgeIcon(icon) { return '<i class="ph ' + icon + '"></i> '; }
+
+function renderJobPopup(pk, data) {
+  jobPopupCurrentPk = pk;
+  document.getElementById('jobPopupTitle').textContent = data.title;
+  document.getElementById('jobPopupDomain').textContent = data.domain || '';
+
+  var badges = '';
+  if (data.job_type) badges += '<span class="job-popup-badge">' + badgeIcon('ph-briefcase') + data.job_type + '</span>';
+  badges += '<span class="job-popup-badge">' + badgeIcon('ph-user') + data.experience + (data.years_of_experience ? ' — ' + data.years_of_experience : '') + '</span>';
+  badges += '<span class="job-popup-badge">' + badgeIcon('ph-map-pin') + data.city + '</span>';
+  if (data.salary_package) badges += '<span class="job-popup-badge">' + badgeIcon('ph-currency-circle-dollar') + data.salary_package + '</span>';
+  if (data.last_date_to_apply) badges += '<span class="job-popup-badge">' + badgeIcon('ph-clock') + 'Apply by ' + data.last_date_to_apply + '</span>';
+  document.getElementById('jobPopupBadges').innerHTML = badges;
+
+  var skillColors = ['blue', 'green', 'purple', 'orange', 'teal', 'rose'];
+  var skillsHtml = '';
+  if (data.skills && data.skills.length) {
+    skillsHtml = '<div class="job-popup-skills"><span class="detail-label">Required Skills</span>';
+    data.skills.forEach(function (s, i) {
+      skillsHtml += '<span class="skill-tag skill-tag-' + skillColors[i % 6] + '">' + s + '</span> ';
+    });
+    skillsHtml += '</div>';
+  }
+
+  var descHtml = data.description ? '<div class="desc-box">' + data.description + '</div>' : '';
+
+  jobPopupBody.innerHTML = skillsHtml + descHtml;
+
+  var interestBtn = document.getElementById('jobPopupInterestBtn');
+  if (data.is_interested) {
+    interestBtn.className = 'btn btn-danger';
+    interestBtn.innerHTML = '<i class="ph-fill ph-thumbs-down"></i> Remove Interest';
+  } else {
+    interestBtn.className = 'btn btn-outline-primary';
+    interestBtn.innerHTML = '<i class="ph ph-thumbs-up"></i> I\'m Interested';
+  }
+  var viewFullBtn = document.getElementById('jobPopupViewFullBtn');
+  viewFullBtn.href = data.detail_url;
+  viewFullBtn.onclick = function () { closeJobPopup(); };
+}
+
+function openJobPopup(pk) {
+  jobPopupOverlay = document.getElementById('jobPopupOverlay');
+  jobPopupBody = document.getElementById('jobPopupBody');
+  jobPopupBody.innerHTML = '<div class="job-popup-loading"><div class="job-popup-spinner"></div>Loading job details…</div>';
+  document.getElementById('jobPopupTitle').textContent = '';
+  document.getElementById('jobPopupDomain').textContent = '';
+  document.getElementById('jobPopupBadges').innerHTML = '';
+  jobPopupOverlay.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+
+  fetch('/jobs/board/' + pk + '/quick-view/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function (r) { if (!r.ok) throw new Error('failed'); return r.json(); })
+    .then(function (data) { renderJobPopup(pk, data); })
+    .catch(function () {
+      jobPopupBody.innerHTML = '<div class="job-popup-loading">Couldn\'t load this job. <a href="/jobs/board/' + pk + '/">View full page instead</a>.</div>';
+    });
+}
+
+function closeJobPopup() {
+  if (!jobPopupOverlay) return;
+  jobPopupOverlay.classList.remove('is-open');
+  document.body.style.overflow = '';
+}
+
+function toggleJobPopupInterest() {
+  var btn = document.getElementById('jobPopupInterestBtn');
+  toggleInterest(jobPopupCurrentPk, btn, function (data) {
+    var card = document.querySelector('.job-card[data-job-pk="' + jobPopupCurrentPk + '"]');
+    if (card) {
+      var cardBtn = card.querySelector('.interest-btn');
+      if (cardBtn) syncInterestButton(cardBtn, data.interested);
+      card.classList.toggle('job-card-interested', data.interested);
+    }
+  });
+}
+
+function initJobBoard() {
+  closeJobPopup();
+  document.querySelectorAll('.job-card').forEach(function (card) {
+    var pk = card.getAttribute('data-job-pk');
+    card.querySelectorAll('.job-card-top-link, .job-card-body-link').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        openJobPopup(pk);
+      });
+    });
+  });
+  document.getElementById('jobPopupOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeJobPopup();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeJobPopup();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initJobBoard);
+window.addEventListener('pageshow', initJobBoard);
+
+function syncInterestButton(btn, interested) {
+  if (interested) {
+    btn.classList.remove('btn-outline-primary');
+    btn.classList.add('btn-danger');
+    btn.innerHTML = '<i class="ph-fill ph-thumbs-down"></i> Remove';
+  } else {
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-outline-primary');
+    btn.innerHTML = '<i class="ph ph-thumbs-up"></i> Interested';
+  }
+}
+
+function toggleInterest(pk, btn, onDone) {
+  fetch('/jobs/board/' + pk + '/interest/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+  }).then(function (r) {
+    if (!r.ok) { return r.json().then(function (d) { customAlert(d.error || 'Something went wrong', { type: 'danger', title: 'Something went wrong' }); }); }
+    return r.json();
+  }).then(function (data) {
+    if (!data) return;
+    syncInterestButton(btn, data.interested);
+    var card = btn.closest('.job-card');
+    if (card) card.classList.toggle('job-card-interested', data.interested);
+    if (onDone) onDone(data);
+  }).catch(function () { location.reload(); });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <div class="section-flex-title" style="font-size:1.35rem;"><span class="text-brand">Search</span> Jobs</div>
+  <div class="text-muted" style="font-size:0.9rem;">Openings shared by fellow alumni, reviewed and published by the AlumniPortal team.</div>
+</div>
+
+<!-- SEARCH / FILTERS -->
+<div class="app-card mb-4">
+  <form method="get" action="{% url 'job_board' %}" id="searchForm">
+    <div class="input-group mb-3">
+      <span class="input-group-text bg-white"><i class="ph ph-magnifying-glass"></i></span>
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by title, skills, domain, or company...">
+    </div>
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1">Job Type</label>
+        <select name="job_type" class="form-select form-select-sm" onchange="document.getElementById('searchForm').submit()">
+          <option value="">All Job Types</option>
+          {% for value, label in job_type_choices %}
+            <option value="{{ value }}" {% if selected_job_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1">Experience</label>
+        <select name="experience" class="form-select form-select-sm" onchange="document.getElementById('searchForm').submit()">
+          <option value="">All Experience</option>
+          {% for value, label in experience_choices %}
+            <option value="{{ value }}" {% if selected_experience == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1">City</label>
+        <select name="city" class="form-select form-select-sm" onchange="document.getElementById('searchForm').submit()">
+          <option value="">All Cities</option>
+          {% for c in cities %}
+            <option value="{{ c }}" {% if selected_city == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1">Domain</label>
+        <select name="domain" class="form-select form-select-sm" onchange="document.getElementById('searchForm').submit()">
+          <option value="">All Domains</option>
+          {% for d in domains %}
+            <option value="{{ d }}" {% if selected_domain == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-auto">
+          <button type="submit" class="btn btn-primary w-100"><i class="ph ph-magnifying-glass"></i> Search</button>
+      </div>
+    </div>
+    {% if q or selected_job_type or selected_experience or selected_city or selected_domain %}
+      <div class="mt-2">
+        <a href="{% url 'job_board' %}" class="btn btn-sm btn-outline-secondary"><i class="ph ph-x-circle"></i> Clear</a>
+      </div>
+    {% endif %}
+  </form>
+</div>
+
+{% if q or selected_job_type or selected_experience or selected_city or selected_domain %}
+  <div class="section-flex-header">
+    <div class="section-flex-title" style="font-size:1rem;">
+      <strong>{{ jobs|length }}</strong> Result{{ jobs|length|pluralize }}
+      {% if q %} for "{{ q }}"{% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<!-- RESULTS -->
+{% if jobs %}
+  {% for job in jobs %}
+    <div class="mb-3">
+      <div class="job-card{% if job.pk in interested_job_ids %} job-card-interested{% endif %}" data-job-pk="{{ job.pk }}">
+        <div class="job-card-top">
+          <a href="{% url 'job_detail' job.pk %}" class="job-card-top-link" style="text-decoration:none !important">
+            <div class="job-card-logo"><i class="ph-fill ph-briefcase"></i></div>
+            <div>
+              <div class="job-card-title">{{ job.title }}</div>
+            </div>
+          </a>
+          <button class="btn btn-sm {% if job.pk in interested_job_ids %}btn-danger{% else %}btn-outline-primary{% endif %} ms-auto interest-btn" onclick="toggleInterest({{ job.pk }}, this)">
+            <i class="{% if job.pk in interested_job_ids %}ph-fill ph-thumbs-down{% else %}ph ph-thumbs-up{% endif %}"></i> {% if job.pk in interested_job_ids %}Remove{% else %}Interested{% endif %}
+          </button>
+        </div>
+        <a href="{% url 'job_detail' job.pk %}" class="job-card-body-link" style="text-decoration:none !important">
+          <div class="job-card-info">
+            <div><span class="detail-label">Company:</span> {{ job.company }}</div>
+            <div><span class="detail-label">Domain:</span> {{ job.domain }}</div>
+            <div><span class="detail-label">Location:</span> {{ job.city }}</div>
+          </div>
+          <div class="job-card-info">
+            <div><span class="detail-label">Job Type:</span> {{ job.job_type|default:"—" }}</div>
+            <div><span class="detail-label">Experience:</span> {{ job.experience }}{% if job.years_of_experience %} ({{ job.years_of_experience }}){% endif %}</div>
+            <div><span class="detail-label">Package:</span> {{ job.salary_package|default:"—" }}</div>
+          </div>
+          {% if job.skills_list %}
+          <div class="job-card-info mt-2">
+            <div><span class="detail-label">Skills:</span>
+            {% for sk in job.skills_list|slice:":4" %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span>{% endfor %}
+            {% if job.skills_list|length > 4 %}<span class="skill-tag skill-tag-purple">+{{ job.skills_list|length|add:"-4" }}</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="job-card-footer">
+            <span class="job-card-applicants"><i class="ph ph-clock"></i> Apply by {{ job.last_date_to_apply|date:"d M" }}</span>
+            <span class="btn-know-more">View Details</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="app-card text-center py-5">
+    <div style="font-size:3rem;color:var(--primary-main);opacity:0.3;"><i class="ph ph-briefcase"></i></div>
+    {% if q or selected_job_type or selected_experience or selected_city or selected_domain %}
+      <div class="fw-bold mt-2">No matching jobs found</div>
+      <div class="text-muted small">Try adjusting your search criteria or filters.</div>
+      <a href="{% url 'job_board' %}" class="btn btn-sm btn-outline-primary mt-3"><i class="ph ph-x-circle"></i> Clear</a>
+    {% else %}
+      <div class="fw-bold mt-2">No job openings available</div>
+      <div class="text-muted small">Check back soon for new opportunities.</div>
+    {% endif %}
+  </div>
+{% endif %}
+
+<!-- CUSTOM JOB PREVIEW POPUP -->
+<div class="job-popup-overlay" id="jobPopupOverlay">
+  <div class="job-popup" role="dialog" aria-modal="true" aria-labelledby="jobPopupTitle">
+    <div class="job-popup-header">
+      <button type="button" class="job-popup-close" onclick="closeJobPopup()" aria-label="Close">
+        <i class="ph ph-x"></i>
+      </button>
+      <div class="job-popup-title" id="jobPopupTitle"></div>
+      <div class="job-popup-domain" id="jobPopupDomain"></div>
+      <div class="job-popup-badges" id="jobPopupBadges"></div>
+    </div>
+    <div class="job-popup-body" id="jobPopupBody"></div>
+    <div class="job-popup-footer">
+      <span class="job-popup-footer-meta"><i class="ph ph-shield-check"></i> Company identity kept private until you apply</span>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary" id="jobPopupInterestBtn" onclick="toggleJobPopupInterest()"></button>
+        <a href="#" class="btn btn-primary" id="jobPopupViewFullBtn"><i class="ph ph-arrow-square-out"></i> View Full Page</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

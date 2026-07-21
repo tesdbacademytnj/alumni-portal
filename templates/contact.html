@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Contact — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">Contact Us</div>
+    <div class="page-header-breadcrumb"><a href="{% url 'home' %}">Home</a> › Contact</div>
+  </div>
+</div>
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-5">
+        <span class="section-label">Get In Touch</span>
+        <h2 class="section-title">We'd Love to Hear From You</h2>
+        <div class="divider-brand"></div>
+        <p style="color:var(--gray-600);margin-bottom:28px;">Have questions about AlumniPortal or want to onboard your institute? Reach out — we respond within 24 hours.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;"><div style="width:44px;height:44px;background:var(--primary-pale);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;"><i class="ph-fill ph-envelope"></i></div><div><div style="font-weight:600;font-size:0.9rem;">Email</div><div style="color:var(--gray-500);font-size:0.88rem;">support@instituteportal.in</div></div></div>
+          <div style="display:flex;gap:14px;align-items:center;"><div style="width:44px;height:44px;background:var(--primary-pale);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;"><i class="ph-fill ph-map-pin"></i></div><div><div style="font-weight:600;font-size:0.9rem;">Location</div><div style="color:var(--gray-500);font-size:0.88rem;">Tamil Nadu, India</div></div></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div style="background:white;border-radius:20px;padding:36px;border:1px solid var(--gray-200);box-shadow:var(--shadow-md);">
+          <h3 style="font-weight:700;margin-bottom:20px;color:var(--gray-900);">Send a Message</h3>
+          {% if success %}<div class="alert alert-success"><i class="ph-fill ph-check-circle"></i> Your message has been sent! We'll be in touch soon.</div>{% endif %}
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="name" class="form-control" placeholder="Your full name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <input type="text" name="subject" class="form-control" placeholder="How can we help?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message</label>
+              <textarea name="message" class="form-control" rows="5" placeholder="Write your message here..." required></textarea>
+            </div>
+            <button type="submit" class="btn-primary-full">Send Message <i class="ph ph-arrow-right"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

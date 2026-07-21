@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}{{ job.title }} — My Job Opening{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+{% if user.is_admin_user %}
+<div class="admin-navbar" style="margin:16px auto;max-width:1160px;">
+  <a href="{% url 'job_board' %}" class="admin-nav-link"><i class="ph ph-arrow-left"></i> Job Board</a>
+  <a href="{% url 'admin_dashboard' %}#tab-pending" class="admin-nav-link"><i class="ph ph-hourglass"></i> Pending</a>
+  <a href="{% url 'admin_dashboard' %}#tab-openings" class="admin-nav-link"><i class="ph-fill ph-briefcase"></i> Openings</a>
+  <a href="{% url 'admin_dashboard' %}#tab-users" class="admin-nav-link"><i class="ph-fill ph-users"></i> Users</a>
+  <a href="{% url 'admin_dashboard' %}#tab-messages" class="admin-nav-link"><i class="ph-fill ph-envelope"></i> Messages</a>
+</div>
+{% endif %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">Job Opening Details</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'dashboard' %}">Dashboard</a> › Job Opening
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+
+    <div class="alert {% if job.status == 'published' %}alert-success{% elif job.status == 'pending' %}alert-warning{% elif job.status == 'rejected' %}alert-danger{% else %}alert-secondary{% endif %} mb-4">
+      {% if job.status == 'published' %}
+        <i class="ph-fill ph-check-circle"></i>
+        <strong>Published</strong> — live on the public job board since {{ job.published_at|date:"d M Y" }}.
+      {% elif job.status == 'pending' %}
+        <i class="ph ph-hourglass"></i>
+        <strong>Pending Review</strong> — an administrator will publish this once approved.
+      {% elif job.status == 'rejected' %}
+        <i class="ph-fill ph-x-circle"></i>
+        <strong>Not Approved</strong> — this posting was not approved for publishing.
+      {% else %}
+        <i class="ph-fill ph-clock"></i>
+        <strong>Expired</strong> — the last date to apply has passed.
+      {% endif %}
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="fw-bold" style="color:var(--gray-900);">{{ job.title }}</h4>
+            <div class="text-muted">{{ job.company }}</div>
+          </div>
+          <div class="text-muted small">Posted {{ job.created_at|date:"d M Y" }}</div>
+        </div>
+        <div class="mb-3 d-flex flex-wrap gap-1">
+          {% if job.job_type %}<span class="badge bg-info">{{ job.job_type }}</span>{% endif %}
+          <span class="badge {% if job.experience == 'Fresher' %}bg-success{% else %}bg-warning{% endif %}">{{ job.experience }}{% if job.years_of_experience %} — {{ job.years_of_experience }}{% endif %}</span>
+          <span class="badge bg-secondary"><i class="ph ph-map-pin"></i> {{ job.city }}</span>
+          {% if job.salary_package %}<span class="badge bg-success"><i class="ph ph-currency-circle-dollar"></i> {{ job.salary_package }}</span>{% endif %}
+          {% if job.last_date_to_apply %}<span class="badge bg-warning"><i class="ph ph-clock"></i> Apply by {{ job.last_date_to_apply|date:"d M Y" }}</span>{% endif %}
+          <span class="badge bg-primary">{{ job.domain }}</span>
+        </div>
+        <hr>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><span class="detail-label">Job Title:</span> {{ job.title }}</div>
+          <div class="col-md-6"><span class="detail-label">Company:</span> {{ job.company }}</div>
+          <div class="col-md-6"><span class="detail-label">Domain:</span> {{ job.domain }}</div>
+          <div class="col-md-6"><span class="detail-label">Job Type:</span> {{ job.job_type|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Experience:</span> {{ job.experience }}{% if job.years_of_experience %} ({{ job.years_of_experience }}){% endif %}</div>
+          <div class="col-md-6"><span class="detail-label">Location:</span> {{ job.city }}</div>
+          <div class="col-md-6"><span class="detail-label">Salary:</span> {{ job.salary_package|default:"Not specified" }}</div>
+          <div class="col-md-6"><span class="detail-label">Last Date:</span> {{ job.last_date_to_apply|date:"d M Y"|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Opening Type:</span> {{ job.opening_type }}</div>
+          {% if job.opening_type == 'Backdoor' %}
+          <div class="col-md-6"><span class="detail-label">Amount to Pay:</span> ₹{{ job.amount_to_pay }}</div>
+          <div class="col-12"><span class="detail-label">Backdoor Description:</span> {{ job.backdoor_description|linebreaksbr }}</div>
+          {% endif %}
+        </div>
+        {% if job.skills_list %}
+        <div class="mb-3">
+          <span class="detail-label">Required Skills:</span><br>
+          {% for sk in job.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}
+        </div>
+        {% endif %}
+        {% if job.description %}
+        <div class="mb-3">
+          <span class="detail-label">Job Description:</span>
+          <div class="desc-box">{{ job.description|safe }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    
+
+    
+
+<script>
+function toggleInterested() {
+  const body = document.getElementById('interestedBody');
+  const toggle = document.getElementById('interestedToggle');
+  if (body.style.display === 'none') {
+    body.style.display = '';
+    toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+  } else {
+    body.style.display = 'none';
+    toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+  }
+}
+</script>
+
+  </div>
+</div>
+{% endblock %}

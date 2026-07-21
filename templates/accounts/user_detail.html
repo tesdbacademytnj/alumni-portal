@@ -1,0 +1,110 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}{{ profile_user.full_name }} — Admin View{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<div class="dashboard-page">
+  <div class="container">
+
+    <div class="admin-navbar">
+      <a href="{% url 'job_board' %}" class="admin-nav-link"><i class="ph ph-arrow-left"></i> Back</a>
+      <a href="{% url 'admin_dashboard' %}#tab-users" class="admin-nav-link"><i class="ph-fill ph-users"></i> Users</a>
+      <a href="{% url 'admin_dashboard' %}#tab-pending" class="admin-nav-link"><i class="ph ph-hourglass"></i> Pending</a>
+      <a href="{% url 'admin_dashboard' %}#tab-openings" class="admin-nav-link"><i class="ph-fill ph-briefcase"></i> Openings</a>
+      <a href="{% url 'admin_dashboard' %}#tab-messages" class="admin-nav-link"><i class="ph-fill ph-envelope"></i> Messages</a>
+    </div>
+
+    <div class="dash-header">
+      <div class="d-flex align-items-center gap-3">
+        <div class="avatar-lg">{{ profile_user.full_name|first|upper }}</div>
+        <div>
+          <div class="dash-welcome">{{ profile_user.full_name }}</div>
+          <div class="dash-subtitle">{{ profile_user.email }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header"><i class="ph-fill ph-briefcase"></i> Professional Profile</div>
+          <div class="card-body">
+            <div class="user-detail-row">
+              <span class="user-detail-label">Employment</span>
+              <span class="user-detail-value">
+                {% if profile_user.employment_status == 'Currently Working' %}
+                  {{ profile_user.current_company }}
+                {% elif profile_user.employment_status == 'Not Working' %}
+                  Not Working
+                {% elif profile_user.employment_status == 'Fresher' %}
+                  Fresher
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Designation</span>
+              <span class="user-detail-value">{{ profile_user.designation|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Domain</span>
+              <span class="user-detail-value">{{ profile_user.domain|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Experience</span>
+              <span class="user-detail-value">{{ profile_user.experience_years|default:"—" }}{% if profile_user.experience_years %} yrs{% endif %}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Salary</span>
+              <span class="user-detail-value">{{ profile_user.salary|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Resume</span>
+              <span class="user-detail-value">{% if profile_user.resume and profile_user.resume.name %}<a href="{{ profile_user.resume.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="ph ph-download-simple"></i> View Resume</a>{% else %}—{% endif %}</span>
+            </div>
+            {% if profile_user.skills %}
+            <div class="user-detail-row">
+              <span class="user-detail-label">Skills</span>
+              <span class="user-detail-value">{% for sk in profile_user.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header"><i class="ph-fill ph-user"></i> Basic Information</div>
+          <div class="card-body">
+            <div class="user-detail-row">
+              <span class="user-detail-label">Mobile</span>
+              <span class="user-detail-value">{{ profile_user.mobile|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">City</span>
+              <span class="user-detail-value">{{ profile_user.city|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Institute</span>
+              <span class="user-detail-value">{{ profile_user.institute|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Batch</span>
+              <span class="user-detail-value">{{ profile_user.batch|default:"—" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Joined</span>
+              <span class="user-detail-value">{{ profile_user.date_joined|date:"d M Y" }}</span>
+            </div>
+            <div class="user-detail-row">
+              <span class="user-detail-label">Status</span>
+              <span class="user-detail-value">
+                {% if profile_user.is_active %}<span class="badge bg-success"><i class="ph ph-check"></i> Verified</span>{% else %}<span class="badge bg-warning"><i class="ph ph-hourglass"></i> Pending</span>{% endif %}
+                <span class="badge {% if profile_user.profile_complete %}bg-success{% else %}bg-warning{% endif %}">{{ profile_user.profile_completion_percentage }}% Profile</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+{% endblock %}

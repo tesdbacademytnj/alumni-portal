@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% block title %}Post Job Opening — AlumniPortal{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const hidden = document.getElementById('id_skills');
+  const tagBox = document.getElementById('skills-tag-box');
+  const input = document.getElementById('skill-text-input');
+  let skills = (hidden ? hidden.value : '').split(',').map(s => s.trim()).filter(Boolean);
+  var skillColors = ['blue','green','purple','orange','teal','rose'];
+  function render() {
+    tagBox.innerHTML = '';
+    skills.forEach(function (s, i) {
+      const sp = document.createElement('span');
+      sp.className = 'skill-tag skill-tag-' + skillColors[i % 6];
+      sp.innerHTML = s + ' <button type="button" onclick="removeSkill(' + i + ')">&times;</button>';
+      tagBox.appendChild(sp);
+    });
+    if (hidden) hidden.value = skills.join(',');
+  }
+  window.addSkill = function () {
+    const v = input.value.trim().replace(/,/g, '');
+    if (v && !skills.includes(v)) { skills.push(v); render(); }
+    input.value = ''; input.focus();
+  };
+  window.removeSkill = function (i) { skills.splice(i, 1); render(); };
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(); }
+  });
+  render();
+})();
+
+document.getElementById('jobExp').addEventListener('change', function () {
+  document.getElementById('yearsExpRow').style.display = this.value === 'Experienced' ? '' : 'none';
+});
+function formatYearsExpValue(val) {
+  var hasPlus = val.indexOf('+') !== -1;
+  var m = val.match(/\d+(\.\d+)?/);
+  if (!m) return val.trim();
+  var num = m[0];
+  if (num.indexOf('.') !== -1) num = num.replace(/0+$/, '').replace(/\.$/, '');
+  return num + (hasPlus ? '+' : '') + ' Year';
+}
+document.getElementById('jobYearsExp').addEventListener('blur', function () {
+  if (this.value.trim()) this.value = formatYearsExpValue(this.value);
+});
+document.getElementById('jobCity').addEventListener('change', function () {
+  document.getElementById('cityOtherRow').style.display = this.value === 'Others' ? '' : 'none';
+});
+
+function cleanMarkdown(raw) {
+  return raw.replace(/^#{1,6}\s+/gm, '').replace(/^\*+([^*\n:]+):\*+[ \t]*/gm, '$1: ').replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/\*([^\s*][^*\n]*)\*/g, '$1').replace(/^\*(?!\s)([^*\n]+)$/gm, '$1').replace(/__([^_\n]+)__/g, '$1');
+}
+function formatDesc() {
+  const ta = document.getElementById('jobDescription');
+  const cleaned = cleanMarkdown(ta.value);
+  const lines = cleaned.split('\n');
+  let html = '';
+  let inList = false;
+  const headingRe = /^(Job Summary|Key Responsibilit|Required Skills|Preferred Skills|Preferred Qualif|Educational Qualif|Eligibilit|Tools\s*(&|and)?\s*Technolog|Technology Stack|Nice[\s-]?to[\s-]?Have|Career Growth|Typical Day|Typical Week|Interview (Topic|Process|Round)|Salary|Benefits|Experience Required|About|Overview|Responsibilit|Qualif|Requirements|Why Join|What We Offer|Who We Are|Roles|Duties)/i;
+  const keyValRe = /^([A-Za-z][A-Za-z\s\/\-]{1,40}):\s+(.+)$/;
+  lines.forEach(function (line) {
+    line = line.trim();
+    if (!line) { if (inList) { html += '</ul>\n'; inList = false; } return; }
+    const isBullet = /^[\*\-•]/.test(line);
+    const kvMatch = !isBullet && keyValRe.exec(line);
+    const isHeading = !isBullet && !kvMatch && (/^[A-Z][A-Z\s&/:()\-]+$/.test(line) || headingRe.test(line) || (line.endsWith(':') && line.length < 70 && !line.includes('  ')) || (/^[A-Z][a-zA-Z]*(\s[A-Z&][a-zA-Z]*){0,4}$/.test(line) && line.length < 45 && !/[.!?]$/.test(line)));
+    if (kvMatch) { if (inList) { html += '</ul>\n'; inList = false; } html += '<p><strong>' + kvMatch[1] + ':</strong> ' + kvMatch[2] + '</p>\n'; }
+    else if (isHeading) { if (inList) { html += '</ul>\n'; inList = false; } html += '<p><strong>' + line.replace(/:$/, '') + '</strong></p>\n'; }
+    else if (isBullet) { if (!inList) { html += '<ul>\n'; inList = true; } html += '<li>' + line.replace(/^[\*\-•]\s*/, '') + '</li>\n'; }
+    else { if (inList) { html += '</ul>\n'; inList = false; } html += '<p>' + line + '</p>\n'; }
+  });
+  if (inList) html += '</ul>\n';
+  ta.value = html;
+  document.getElementById('desc-preview').innerHTML = html;
+  document.getElementById('preview-wrap').style.display = 'block';
+}
+document.getElementById('jobDescription').addEventListener('paste', function () { setTimeout(formatDesc, 50); });
+document.getElementById('submitOpeningBtn').addEventListener('click', function (e) {
+  e.preventDefault();
+  var form = document.getElementById('postOpeningForm');
+  if (!form.reportValidity()) return;
+  {% if admin_mode %}
+  customConfirm('This opening will be published immediately and visible to all users. Are you sure?', {
+    title: 'Publish Now?',
+    okText: 'Yes, Publish',
+    cancelText: 'Cancel'
+  }).then(function (confirmed) {
+    if (confirmed) form.submit();
+  });
+  {% else %}
+  customConfirm('Once submitted, this opening cannot be deleted. Are you sure you want to submit for review?', {
+    title: 'Submit for Review?',
+    okText: 'Yes, Submit',
+    cancelText: 'Cancel'
+  }).then(function (confirmed) {
+    if (confirmed) form.submit();
+  });
+  {% endif %}
+});
+document.getElementById('jobDescription').addEventListener('input', function () {
+  const raw = this.value;
+  document.getElementById('desc-preview').innerHTML = raw;
+  document.getElementById('preview-wrap').style.display = raw.trim() ? 'block' : 'none';
+});
+
+/* ── Salary auto-format ────────────────────────────────── */
+(function () {
+  const salaryInput = document.getElementById('id_salary_package');
+  const typeBtn = document.getElementById('salaryTypeBtn');
+  const options = document.querySelectorAll('.salary-type-option');
+  const notDisclose = document.getElementById('salaryNotDisclose');
+  const industryStandard = document.getElementById('salaryIndustryStandard');
+  let currentType = 'lpa';
+
+  function detectType(val) {
+    if (/^₹/.test(val)) return 'monthly';
+    if (/LPA/i.test(val)) return 'lpa';
+    return currentType;
+  }
+
+  function getRawNumber(val) {
+    return val.replace(/[^0-9.]/g, '').replace(/\.+$/, '');
+  }
+
+  function formatSalary(val, type) {
+    const num = getRawNumber(val);
+    if (!num) return '';
+    return type === 'lpa' ? num + ' LPA' : '₹' + num;
+  }
+
+  function setType(type) {
+    currentType = type;
+    typeBtn.textContent = type === 'lpa' ? 'LPA' : '₹';
+    options.forEach(function (o) {
+      o.classList.toggle('active', o.dataset.type === type);
+    });
+  }
+
+  function lockSalary(text) {
+    salaryInput.value = text;
+    salaryInput.disabled = true;
+    typeBtn.disabled = true;
+  }
+
+  function unlockSalary() {
+    salaryInput.disabled = false;
+    typeBtn.disabled = false;
+    if (salaryInput.value === 'Not Disclosed' || salaryInput.value === 'As per Industry Standard') {
+      salaryInput.value = '';
+    }
+  }
+
+  function isLocked() {
+    return notDisclose.checked || industryStandard.checked;
+  }
+
+  function toggleNotDisclose() {
+    if (notDisclose.checked) {
+      industryStandard.checked = false;
+      lockSalary('Not Disclosed');
+    } else if (!isLocked()) {
+      unlockSalary();
+    }
+  }
+
+  function toggleIndustryStandard() {
+    if (industryStandard.checked) {
+      notDisclose.checked = false;
+      lockSalary('As per Industry Standard');
+    } else if (!isLocked()) {
+      unlockSalary();
+    }
+  }
+
+  if (salaryInput.value === 'Not Disclosed') {
+    notDisclose.checked = true;
+    lockSalary('Not Disclosed');
+  } else if (salaryInput.value === 'As per Industry Standard') {
+    industryStandard.checked = true;
+    lockSalary('As per Industry Standard');
+  } else if (salaryInput.value) {
+    const detected = detectType(salaryInput.value);
+    setType(detected);
+  }
+
+  notDisclose.addEventListener('change', toggleNotDisclose);
+  industryStandard.addEventListener('change', toggleIndustryStandard);
+
+  salaryInput.addEventListener('blur', function () {
+    if (isLocked()) return;
+    const raw = salaryInput.value;
+    const num = getRawNumber(raw);
+    if (num && /^\d+\.?\d*$/.test(num)) {
+      salaryInput.value = formatSalary(num, currentType);
+    }
+  });
+
+  options.forEach(function (opt) {
+    opt.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isLocked()) return;
+      const type = this.dataset.type;
+      setType(type);
+      const raw = salaryInput.value;
+      const num = getRawNumber(raw);
+      if (num) {
+        salaryInput.value = formatSalary(num, type);
+      }
+    });
+  });
+})();
+
+document.getElementById('openingType').addEventListener('change', function () {
+  var show = this.value === 'Backdoor';
+  document.getElementById('amountToPay').style.display = show ? '' : 'none';
+  document.getElementById('backdoorDesc').style.display = show ? '' : 'none';
+  document.getElementById('backdoorFields').style.display = show ? '' : 'none';
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">Post a Job Opening</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'dashboard' %}">Dashboard</a> › Post Opening
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+    <div class="card mb-4">
+      <div class="card-header fw-bold"><i class="ph-fill ph-briefcase"></i> Share a Job Opening — Help your fellow alumni find their next opportunity</div>
+      <div class="card-body">
+        <form method="post" novalidate id="postOpeningForm">
+          {% csrf_token %}
+
+          <h6 class="form-section-title"><i class="ph ph-buildings"></i> Job Details</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Job Title <span class="text-danger">*</span></label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Company Name <span class="text-danger">*</span></label>
+              {{ form.company }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Domain / Technology <span class="text-danger">*</span></label>
+              {{ form.domain }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Job Type <span class="text-danger">*</span></label>
+              {{ form.job_type }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Salary / Package <span class="text-danger">*</span></label>
+              <div class="input-group">
+                {{ form.salary_package }}
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="salaryTypeBtn" data-bs-toggle="dropdown" aria-expanded="false">LPA</button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salaryTypeBtn">
+                  <li><a class="dropdown-item salary-type-option active" data-type="lpa" href="#">Annual (LPA)</a></li>
+                  <li><a class="dropdown-item salary-type-option" data-type="monthly" href="#">Monthly (₹)</a></li>
+                </ul>
+              </div>
+              <div class="form-text">Enter just the number — we'll format it for you.</div>
+              <div class="d-flex flex-wrap gap-3 mt-2" style="margin-left: 24px;">
+                <div class="form-check">
+                  {{ form.salary_not_disclosed }}
+                  <label class="form-check-label" for="salaryNotDisclose">Prefer not to disclose</label>
+                </div>
+                <div class="form-check ms-4">
+                  {{ form.salary_industry_standard }}
+                  <label class="form-check-label" for="salaryIndustryStandard">As per Industry Standard</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Experience Required <span class="text-danger">*</span></label>
+              {{ form.experience }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6" id="yearsExpRow" style="display:none;">
+              <label class="form-label">Years of Experience <span class="text-danger">*</span></label>
+              {{ form.years_of_experience }}
+              <div class="form-text">Enter a number like 3 or 3+ — we'll format it as "3+ Year".</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Job Location <span class="text-danger">*</span></label>
+              {{ form.city }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Last Date to Apply <span class="text-danger">*</span></label>
+              {{ form.last_date_to_apply }}
+            </div>
+            <div class="col-md-6" id="cityOtherRow" style="display:none;">
+              <label class="form-label">Enter City <span class="text-danger">*</span></label>
+              {{ form.city_other }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-arrow-circle-down"></i> Opening Type</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Opening Type <span class="text-danger">*</span></label>
+              {{ form.opening_type }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4" id="backdoorFields" style="display:none;">
+            <div class="col-md-6">
+              <label class="form-label">Amount to Pay <span class="text-danger">*</span></label>
+              {{ form.amount_to_pay }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Backdoor Description <span class="text-danger">*</span></label>
+              {{ form.backdoor_description }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-wrench"></i> Required Skills <span class="text-danger">*</span></h6>
+          {{ form.skills }}
+          <div id="skills-tag-box" class="mb-2"></div>
+          <div class="d-flex gap-2 mb-4">
+            <input type="text" id="skill-text-input" class="form-control" placeholder="Type a skill and press Enter (e.g. Python, Django, React)">
+            <button type="button" onclick="addSkill()" class="btn btn-sm btn-primary" style="white-space:nowrap;">+ Add</button>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-clipboard-text"></i> Job Description <span class="text-danger">*</span></h6>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small">Paste your description — it auto-formats on paste</span>
+            <button type="button" onclick="formatDesc()" class="btn btn-sm btn-outline-secondary"><i class="ph ph-lightning"></i> Format</button>
+          </div>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+          <div id="preview-wrap" style="display:none;" class="mt-2">
+            <div class="small fw-bold text-muted mb-1">PREVIEW</div>
+            <div id="desc-preview" class="desc-box"></div>
+          </div>
+
+          {% if form.non_field_errors %}<div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>{% endif %}
+
+          <div class="d-flex gap-2 mt-4">
+            <a href="{% if admin_mode %}{% url 'admin_dashboard' %}#tab-openings{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="submitOpeningBtn"><i class="ph ph-paper-plane-right"></i> {% if admin_mode %}Publish Now{% else %}Submit for Review{% endif %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

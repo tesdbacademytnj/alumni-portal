@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Services — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">Our Services</div>
+    <div class="page-header-breadcrumb"><a href="{% url 'home' %}">Home</a> › Services</div>
+  </div>
+</div>
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-5 align-items-center mb-5">
+      <div class="col-lg-6">
+        <span class="section-label">For Students & Alumni</span>
+        <h2 class="section-title">Career Services Built Around Your Institute</h2>
+        <p class="section-subtitle">We bridge the gap between education and employment.<br>Our platform provides end-to-end career support through your alumni network.</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      {% for s in services_list %}
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph-fill ph-{{ s.icon }}"></i></div>
+          <div class="feature-title">{{ s.title }}</div>
+          <div class="feature-text">{{ s.desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

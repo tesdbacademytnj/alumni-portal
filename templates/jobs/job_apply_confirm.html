@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Confirm Application — {{ job.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">Confirm Your Application</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'job_board' %}">Job Board</a> › <a href="{% url 'job_detail' job.pk %}">{{ job.title }}</a> › Apply
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+
+    <div class="card mb-4">
+      <div class="card-header">{{ job.title }}</div>
+      <div class="card-body text-muted">{{ job.domain }} &middot; {{ job.job_type }} &middot; {{ job.city }}</div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header"><i class="ph ph-identification-badge"></i> Your Profile We'll Share</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">This is your saved "Looking for a Job" profile. Review it below — you can update it before applying.</p>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><span class="detail-label">Desired Role:</span> {{ seeker_profile.title }}</div>
+          <div class="col-md-6"><span class="detail-label">Domain:</span> {{ seeker_profile.domain }}</div>
+          <div class="col-md-6"><span class="detail-label">Employment Status:</span> {{ seeker_profile.employment_status|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Experience:</span> {{ seeker_profile.experience }}{% if seeker_profile.years_of_experience %} ({{ seeker_profile.years_of_experience }}){% endif %}</div>
+          <div class="col-md-6"><span class="detail-label">Current City:</span> {{ seeker_profile.current_city|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Expected Salary:</span> {{ seeker_profile.expected_salary|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Email:</span> {{ seeker_profile.email }}</div>
+          <div class="col-md-6"><span class="detail-label">Mobile:</span> {{ seeker_profile.mobile }}</div>
+        </div>
+        {% if seeker_profile.skills_list %}
+        <div class="mb-3">
+          <span class="detail-label">Skills:</span><br>
+          {% for sk in seeker_profile.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}
+        </div>
+        {% endif %}
+        {% if seeker_profile.resume %}
+        <div class="mb-3">
+          <a href="{{ seeker_profile.resume.url }}" target="_blank" style="color:var(--primary-main);"><i class="ph ph-file-text"></i> View attached resume</a>
+        </div>
+        {% endif %}
+        <div><a href="{% url 'seek_job' %}" class="text-muted small text-decoration-underline">Not accurate? Update your profile first</a></div>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="ph-fill ph-paper-plane-right"></i> Confirm &amp; Apply</button>
+        <a href="{% url 'job_detail' job.pk %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

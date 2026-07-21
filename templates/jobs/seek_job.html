@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}Looking for a Job — AlumniPortal{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const hidden = document.getElementById('id_skills');
+  const tagBox = document.getElementById('skills-tag-box');
+  const input = document.getElementById('skill-text-input');
+  let skills = (hidden ? hidden.value : '').split(',').map(s => s.trim()).filter(Boolean);
+  var skillColors = ['blue','green','purple','orange','teal','rose'];
+  function render() {
+    tagBox.innerHTML = '';
+    skills.forEach(function (s, i) {
+      const sp = document.createElement('span');
+      sp.className = 'skill-tag skill-tag-' + skillColors[i % 6];
+      sp.innerHTML = s + ' <button type="button" onclick="removeSkill(' + i + ')">&times;</button>';
+      tagBox.appendChild(sp);
+    });
+    if (hidden) hidden.value = skills.join(',');
+  }
+  window.addSkill = function () {
+    const v = input.value.trim().replace(/,/g, '');
+    if (v && !skills.includes(v)) { skills.push(v); render(); }
+    input.value = ''; input.focus();
+  };
+  window.removeSkill = function (i) { skills.splice(i, 1); render(); };
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(); }
+  });
+  render();
+})();
+
+const NEEDS_EXP = ['Currently Working', 'On Notice Period', 'Career Gap', 'Left Job'];
+document.getElementById('seekStatus').addEventListener('change', function () {
+  const notFresher = NEEDS_EXP.includes(this.value);
+  document.getElementById('expRow').style.display = notFresher ? '' : 'none';
+  document.getElementById('companyRow').style.display = notFresher ? '' : 'none';
+  document.getElementById('desigRow').style.display = notFresher ? '' : 'none';
+});
+
+const NO_COURSE = ['10th', '12th'];
+document.getElementById('seekQual').addEventListener('change', function () {
+  const needs = this.value && !NO_COURSE.includes(this.value);
+  document.getElementById('courseRow').style.display = needs ? '' : 'none';
+  document.getElementById('seekCourse').required = needs;
+});
+
+document.getElementById('seekJoining').addEventListener('change', function () {
+  document.getElementById('joinOtherRow').style.display = this.value === 'Others' ? '' : 'none';
+});
+
+document.getElementById('salaryToggle').addEventListener('change', function () {
+  const f = document.getElementById('expectedSalary');
+  f.disabled = this.checked;
+  if (this.checked) f.value = '';
+});
+
+document.getElementById('seekYearsExp').addEventListener('blur', function () {
+  if (!this.value.trim()) return;
+  var m = this.value.match(/\d+(\.\d+)?/);
+  if (!m) return;
+  var num = m[0];
+  if (num.indexOf('.') !== -1) num = num.replace(/0+$/, '').replace(/\.$/, '');
+  this.value = num + '+ Year';
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">I'm Looking for a Job</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'dashboard' %}">Dashboard</a> › Seek Job
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+    <div class="card mb-4">
+      <div class="card-header fw-bold"><i class="ph ph-magnifying-glass"></i> Submit Your Job Profile — Let employers in your network discover you</div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {{ form.experience }}
+
+          <h6 class="form-section-title"><i class="ph ph-clipboard-text"></i> Basic Info</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Desired Job Title <span class="text-danger">*</span></label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Domain / Area <span class="text-danger">*</span></label>
+              {{ form.domain }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Email Address <span class="text-danger">*</span></label>
+              {{ form.email }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+              {{ form.mobile }}
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Qualification <span class="text-danger">*</span></label>
+              {{ form.qualification }}
+              {% if form.qualification.errors %}<div class="text-danger small">{{ form.qualification.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="courseRow" style="display:none;">
+              <label class="form-label">Course Name <span class="text-danger">*</span></label>
+              {{ form.qualification_course }}
+              {% if form.qualification_course.errors %}<div class="text-danger small">{{ form.qualification_course.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-briefcase"></i> Current Employment Status</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Current Status <span class="text-danger">*</span></label>
+              {{ form.employment_status }}
+              {% if form.employment_status.errors %}<div class="text-danger small">{{ form.employment_status.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="expRow" style="display:none;">
+              <label class="form-label">Years of Experience <span class="text-danger">*</span></label>
+              {{ form.years_of_experience }}
+              <div class="form-text">Enter a number like 3 or 3+ — we'll format it as "3+ Year".</div>
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6" id="companyRow" style="display:none;">
+              <label class="form-label">Current Working Company <span class="text-danger">*</span></label>
+              {{ form.current_company }}
+            </div>
+            <div class="col-md-6" id="desigRow" style="display:none;">
+              <label class="form-label">Current Designation <span class="text-danger">*</span></label>
+              {{ form.current_designation }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-calendar"></i> Joining Preference</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Available to Join <span class="text-danger">*</span></label>
+              {{ form.joining_preference }}
+              {% if form.joining_preference.errors %}<div class="text-danger small">{{ form.joining_preference.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="joinOtherRow" style="display:none;">
+              <label class="form-label">Enter Your Preference <span class="text-danger">*</span></label>
+              {{ form.joining_months_others }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-currency-circle-dollar"></i> Salary &amp; Location</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Expected Salary <span class="text-danger">*</span></label>
+              {{ form.expected_salary }}
+              <div class="mt-1">
+                {{ form.salary_not_disclosed }}
+                <label for="salaryToggle" class="text-muted small">Prefer not to disclose</label>
+              </div>
+              {% if form.expected_salary.errors %}<div class="text-danger small">{{ form.expected_salary.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Current City <span class="text-danger">*</span></label>
+              {{ form.current_city }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-wrench"></i> Skills <span class="text-danger">*</span></h6>
+          {{ form.skills }}
+          <div id="skills-tag-box" class="mb-2"></div>
+          <div class="d-flex gap-2 mb-4">
+            <input type="text" id="skill-text-input" class="form-control" placeholder="Type a skill and press Enter (e.g. Python, Django, React)">
+            <button type="button" onclick="addSkill()" class="btn btn-sm btn-primary" style="white-space:nowrap;">+ Add</button>
+          </div>
+          {% if form.skills.errors %}<div class="text-danger small mt-1">{{ form.skills.errors.0 }}</div>{% endif %}
+
+          <h6 class="form-section-title"><i class="ph ph-file"></i> Resume <span class="text-danger">*</span></h6>
+          <div class="mb-4">
+            {{ form.resume }}
+            <div class="form-text">PDF or DOC, max 5MB</div>
+            {% if form.resume.errors %}<div class="text-danger small">{{ form.resume.errors.0 }}</div>{% endif %}
+          </div>
+
+          {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+          <div class="d-flex gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="ph ph-paper-plane-right"></i> Submit Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

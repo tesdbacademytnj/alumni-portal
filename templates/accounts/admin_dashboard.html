@@ -1,0 +1,240 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Admin Dashboard — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+    <div class="dash-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <div class="dash-welcome"><i class="ph-fill ph-shield-check"></i> Admin Dashboard</div>
+        <div class="dash-subtitle">Welcome, {{ user.full_name }} — Full visibility across AlumniPortal</div>
+      </div>
+      <div id="stat-box" class="admin-stat-box" style="display:none;">
+        <div id="stat-label" class="stat-label"></div>
+        <div id="stat-count" class="stat-count"></div>
+      </div>
+    </div>
+    <div id="stat-data" data-users="{{ user_count }}" data-pending="{{ pending_count }}" data-openings="{{ openings_count }}" data-messages="{{ messages_count }}" style="display:none;"></div>
+
+    <div class="admin-navbar">
+      <a href="{% url 'job_board' %}" class="admin-nav-link"><i class="ph ph-arrow-left"></i> Back</a>
+      <a href="#tab-users" class="admin-nav-link" onclick="showTab('tab-users');return false;"><i class="ph-fill ph-users"></i> Users</a>
+      <a href="#tab-pending" class="admin-nav-link" onclick="showTab('tab-pending');return false;"><i class="ph ph-hourglass"></i> Pending</a>
+      <a href="#tab-openings" class="admin-nav-link" onclick="showTab('tab-openings');return false;"><i class="ph-fill ph-briefcase"></i> Openings</a>
+      <a href="#tab-messages" class="admin-nav-link" onclick="showTab('tab-messages');return false;"><i class="ph-fill ph-envelope"></i> Messages</a>
+    </div>
+
+    <!-- TAB: PENDING -->
+    <div id="tab-pending" class="tab-content" style="{% if not pending_openings %}display:none;{% endif %}">
+      {% if pending_openings %}
+        {% for job in pending_openings %}
+        <div class="card mb-4" style="border-left:4px solid var(--warning);cursor:pointer;" onclick="window.location.href='{% url 'my_opening_detail' job.pk %}'">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div>
+                <div class="fw-bold" style="font-size:1.05rem;">{{ job.title }}</div>
+                <div class="text-muted small">{{ job.company }} — posted by {{ job.posted_by.full_name }}</div>
+              </div>
+              <div class="text-muted small">Submitted {{ job.created_at|date:"d M Y" }}</div>
+            </div>
+            <div class="mb-3">
+              {% if job.job_type %}<span class="badge bg-info">{{ job.job_type }}</span>{% endif %}
+              <span class="badge {% if job.experience == 'Fresher' %}bg-success{% else %}bg-warning{% endif %}">{{ job.experience }}</span>
+              <span class="badge bg-secondary"><i class="ph ph-map-pin"></i> {{ job.city }}</span>
+              {% if job.salary_package %}<span class="badge bg-success"><i class="ph ph-currency-circle-dollar"></i> {{ job.salary_package }}</span>{% endif %}
+              <span class="badge bg-primary">{{ job.domain }}</span>
+            </div>
+            <div class="mb-3" onclick="event.stopPropagation();">
+              <div class="desc-toggle" onclick="toggleDesc('pd-{{job.id}}',this)"><i class="ph ph-chevron-down"></i> <span>Description</span></div>
+              <div id="pd-{{job.id}}" style="display:none;" class="desc-box mt-2">{{ job.description|safe }}</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap" style="border-top:1px solid var(--gray-100);padding-top:10px;" onclick="event.stopPropagation();">
+              <a href="{% url 'my_opening_detail' job.pk %}" class="btn btn-outline-primary btn-sm"><i class="ph ph-arrow-square-out"></i> View Full Page</a>
+              <form method="post" action="{% url 'publish_job' job.pk %}">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="ph-fill ph-check-circle"></i> Publish</button></form>
+              <form method="post" action="{% url 'reject_job' job.pk %}">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="ph-fill ph-x-circle"></i> Reject</button></form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="alert alert-light text-center py-4">Nothing pending — you're all caught up.</div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: USERS -->
+    <div id="tab-users" class="tab-content" style="{% if pending_openings %}display:none;{% endif %}">
+      {% if users %}
+        {% for u in users %}
+        <div class="card mb-3" style="cursor:pointer;" onclick="window.location.href='{% url 'user_detail' u.id %}'">
+          <div class="card-body">
+            <div class="d-flex gap-3 align-items-center mb-2">
+              <div class="interest-avatar">{{ u.full_name|first|upper }}</div>
+              <div style="flex:1;">
+                <div class="fw-bold">{{ u.full_name }}</div>
+                <div class="text-muted small">{{ u.email }}</div>
+              </div>
+            </div>
+            <div class="mb-2">
+              {% if u.is_active %}<span class="badge bg-success"><i class="ph ph-check"></i> Verified</span>{% else %}<span class="badge bg-warning"><i class="ph ph-hourglass"></i> Pending</span>{% endif %}
+          {% if u.institute %}<span class="badge bg-primary">{{ u.institute }}</span>{% endif %}
+          {% if u.batch %}<span class="badge bg-warning">{{ u.batch }}</span>{% endif %}
+            </div>
+            <div class="text-muted small mb-2 d-flex flex-wrap gap-3"><span><i class="ph ph-buildings"></i> <strong>{% if u.employment_status == 'Currently Working' %}{{ u.current_company }}{% elif u.employment_status == 'Not Working' %}Not Working{% elif u.employment_status == 'Fresher' %}Fresher{% else %}{{ u.current_company|default:"—" }}{% endif %}</strong> — {{ u.designation|default:"—" }}</span><span><i class="ph ph-laptop"></i> {{ u.domain|default:"—" }} — {{ u.experience_years|default:"—" }}{% if u.experience_years %} yrs{% endif %}</span><span><i class="ph ph-map-pin"></i> {{ u.city|default:"—" }}</span></div>
+            {% if u.skills %}
+            <div class="mb-2">
+              {% for sk in u.skills_list|slice:":5" %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}
+            </div>
+            {% endif %}
+            <a href="{% url 'user_detail' u.id %}" class="btn btn-outline-primary btn-sm w-100" onclick="event.stopPropagation();">View Profile <i class="ph ph-arrow-right"></i></a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="alert alert-light text-center py-4">No users registered yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: OPENINGS -->
+    <div id="tab-openings" class="tab-content" style="display:none;">
+      {% if all_openings %}
+        {% for job in all_openings %}
+        <div class="mb-3">
+          <div class="job-card" style="cursor:pointer;" onclick="window.location.href='{% url 'my_opening_detail' job.pk %}'">
+            <div class="job-card-top">
+              <div class="job-card-logo"><i class="ph-fill ph-briefcase"></i></div>
+              <div>
+                <div class="job-card-title">{{ job.title }}</div>
+                <div class="job-card-meta">{{ job.company }}</div>
+              </div>
+              <div class="ms-auto d-flex align-items-center gap-2">
+                {% if job.status == 'published' %}<span class="tag-pill tag-pill-green"><i class="ph-fill ph-check-circle"></i> Published</span>
+                {% elif job.status == 'pending' %}<span class="tag-pill tag-pill-gold"><i class="ph ph-hourglass"></i> Pending</span>
+                {% elif job.status == 'rejected' %}<span class="tag-pill" style="background:#FEE2E2;color:#991B1B;"><i class="ph-fill ph-x-circle"></i> Rejected</span>
+                {% else %}<span class="tag-pill" style="background:var(--gray-100);color:var(--gray-600);"><i class="ph-fill ph-clock"></i> Expired</span>{% endif %}
+              </div>
+            </div>
+            <div class="job-card-tags">
+              {% if job.domain %}<span class="tag-pill tag-pill-brand">{{ job.domain }}</span>{% endif %}
+              {% if job.job_type %}<span class="tag-pill">{{ job.job_type }}</span>{% endif %}
+              <span class="tag-pill {% if job.experience == 'Fresher' %}tag-pill-green{% else %}tag-pill-gold{% endif %}">{{ job.experience }}{% if job.years_of_experience %} — {{ job.years_of_experience }}{% endif %}</span>
+              {% if job.salary_package %}<span class="tag-pill tag-pill-green"><i class="ph ph-currency-circle-dollar"></i> {{ job.salary_package }}</span>{% endif %}
+              <span class="tag-pill" style="background:var(--primary-pale);color:var(--primary-dark);"><i class="ph ph-map-pin"></i> {{ job.city }}</span>
+            </div>
+            {% if job.skills_list %}
+            <div class="job-card-tags">
+              {% for sk in job.skills_list|slice:":6" %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span>{% endfor %}
+              {% if job.skills_list|length > 6 %}<span class="skill-tag skill-tag-purple">+{{ job.skills_list|length|add:"-6" }}</span>{% endif %}
+            </div>
+            {% endif %}
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <div class="avatar-sm">{{ job.posted_by.full_name|first|upper }}</div>
+              <div class="small"><strong>{{ job.posted_by.full_name }}</strong> <span class="text-muted">&middot; {{ job.posted_by.email }}</span> &middot; Posted {{ job.created_at|date:"d M Y" }}</div>
+            </div>
+            <div class="mb-3" onclick="event.stopPropagation();">
+              <div class="desc-toggle" onclick="toggleDesc('jd-{{job.id}}',this)"><i class="ph ph-chevron-down"></i> <span>Description</span></div>
+              <div id="jd-{{job.id}}" style="display:none;" class="desc-box">{{ job.description|safe }}</div>
+            </div>
+            <div class="job-card-footer">
+              <div class="d-flex gap-2 flex-wrap" onclick="event.stopPropagation();">
+                <a href="{% url 'my_opening_detail' job.pk %}" class="btn btn-outline-primary btn-sm"><i class="ph ph-arrow-square-out"></i> View Full Page</a>
+                {% if job.status == 'pending' %}
+                  <form method="post" action="{% url 'publish_job' job.pk %}">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="ph-fill ph-check-circle"></i> Publish</button></form>
+                  <form method="post" action="{% url 'reject_job' job.pk %}">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="ph-fill ph-x-circle"></i> Reject</button></form>
+                {% elif job.status == 'published' %}
+                  <form method="post" action="{% url 'unpublish_job' job.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="ph ph-eye-slash"></i> Unpublish</button></form>
+                {% endif %}
+                {% if job.status == 'published' %}
+                  <a href="{% url 'interest_list' job.pk %}" class="btn btn-sm btn-outline-primary"><i class="ph-fill ph-thumbs-up"></i> Interested <span class="badge bg-primary">{{ job.interests.count }}</span></a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="alert alert-light text-center py-4">No job openings posted yet.</div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: MESSAGES -->
+    <div id="tab-messages" class="tab-content" style="display:none;">
+      {% if contact_messages %}
+        {% for msg in contact_messages %}
+        <div class="card mb-3" style="{% if not msg.is_read %}border-left:4px solid var(--primary-main);{% endif %}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div class="d-flex gap-3 align-items-center">
+                <div class="avatar-md">{{ msg.name|first|upper }}</div>
+                <div>
+                  <div class="fw-bold">{{ msg.name }}{% if not msg.is_read %} <span class="badge bg-primary">New</span>{% endif %}</div>
+                  <div class="text-muted small"><i class="ph ph-envelope"></i> {{ msg.email }}</div>
+                </div>
+              </div>
+              <div class="text-muted small">{{ msg.created_at|date:"d M Y, g:i A" }}</div>
+            </div>
+            {% if msg.subject %}
+            <div class="fw-semibold mb-2">Subject: {{ msg.subject }}</div>
+            {% endif %}
+            <div class="bg-light p-3 rounded mb-2" style="white-space:pre-wrap;">{{ msg.message }}</div>
+            <div class="d-flex gap-2">
+              <a href="mailto:{{ msg.email }}?subject=Re: {{ msg.subject }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-arrow-bend-up-left"></i> Reply via Email</a>
+              {% if not msg.is_read %}
+              <form method="post" action="{% url 'mark_message_read' msg.id %}">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="ph ph-check"></i> Mark as Read</button></form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="alert alert-light text-center py-4">No contact messages yet.</div>
+      {% endif %}
+    </div>
+
+
+<script>
+function showTab(id) {
+  var tabs = document.querySelectorAll('.tab-content');
+  tabs.forEach(function(el) { el.style.display = 'none'; });
+  var target = document.getElementById(id);
+  if (target) target.style.display = 'block';
+  var statBox = document.getElementById('stat-box');
+  var statLabel = document.getElementById('stat-label');
+  var statCount = document.getElementById('stat-count');
+  var statData = document.getElementById('stat-data');
+  if (id !== 'tab-overview' && statData) {
+    var key = id.replace('tab-', '');
+    var label = key.charAt(0).toUpperCase() + key.slice(1);
+    var count = statData.getAttribute('data-' + key);
+    statLabel.textContent = label;
+    statCount.textContent = count;
+    statBox.style.display = '';
+  } else {
+    statBox.style.display = 'none';
+  }
+  document.querySelectorAll('.sidebar-link.admin-link').forEach(function(el) {
+    el.classList.remove('active');
+    if (el.getAttribute('data-tab') === id) el.classList.add('active');
+  });
+}
+function toggleDesc(id, header) {
+  var el = document.getElementById(id);
+  var open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  var icon = header.querySelector('i');
+  var span = header.querySelector('span');
+  header.classList.toggle('active');
+  if (open) {
+    icon.className = 'ph ph-chevron-down';
+    span.textContent = 'Description';
+  } else {
+    icon.className = 'ph ph-chevron-up';
+    span.textContent = 'Hide';
+  }
+}
+(function() {
+  var hash = window.location.hash.replace('#', '') || 'tab-pending';
+  showTab(hash);
+  window.addEventListener('hashchange', function() {
+    showTab(window.location.hash.replace('#', '') || 'tab-overview');
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}{{ job.title }} — Job Board{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    {% if user.is_admin_user %}
+    <div class="mb-2">
+      <a href="{% url 'admin_dashboard' %}#tab-openings" class="btn btn-sm btn-outline-secondary"><i class="ph ph-arrow-left"></i> Back to Admin</a>
+    </div>
+    {% endif %}
+    <div class="page-header-title">{{ job.title }}</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'job_board' %}">Job Board</a> › {{ job.title }}
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+
+    {% if not job.is_live %}
+    <div class="alert {% if job.status == 'pending' %}alert-warning{% elif job.status == 'rejected' %}alert-danger{% else %}alert-secondary{% endif %} mb-4">
+      <i class="{% if job.status == 'pending' %}ph ph-hourglass{% elif job.status == 'rejected' %}ph-fill ph-x-circle{% else %}ph-fill ph-clock{% endif %}"></i>
+      This posting is {% if job.status == 'pending' %}awaiting admin approval{% elif job.status == 'rejected' %}not approved{% else %}no longer accepting applications{% endif %}.
+    </div>
+    {% endif %}
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="fw-bold" style="color:var(--gray-900);">{{ job.title }}</h4>
+            <div class="text-muted">{{ job.domain }}</div>
+          </div>
+        </div>
+        <div class="mb-3 d-flex flex-wrap gap-1">
+          {% if job.job_type %}<span class="badge bg-info">{{ job.job_type }}</span>{% endif %}
+          <span class="badge {% if job.experience == 'Fresher' %}bg-success{% else %}bg-warning{% endif %}">{{ job.experience }}{% if job.years_of_experience %} — {{ job.years_of_experience }}{% endif %}</span>
+          <span class="badge bg-secondary"><i class="ph ph-map-pin"></i> {{ job.city }}</span>
+          {% if job.salary_package %}<span class="badge bg-success"><i class="ph ph-currency-circle-dollar"></i> {{ job.salary_package }}</span>{% endif %}
+          <span class="badge bg-warning"><i class="ph ph-clock"></i> Apply by {{ job.last_date_to_apply|date:"d M Y" }}</span>
+        </div>
+        <hr>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><span class="detail-label">Role:</span> {{ job.title }}</div>
+          <div class="col-md-6"><span class="detail-label">Domain:</span> {{ job.domain }}</div>
+          <div class="col-md-6"><span class="detail-label">Job Type:</span> {{ job.job_type|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Experience:</span> {{ job.experience }}{% if job.years_of_experience %} ({{ job.years_of_experience }}){% endif %}</div>
+          <div class="col-md-6"><span class="detail-label">Location:</span> {{ job.city }}</div>
+          <div class="col-md-6"><span class="detail-label">Package:</span> {{ job.salary_package|default:"Not specified" }}</div>
+          <div class="col-md-6"><span class="detail-label">Opening Type:</span> {{ job.opening_type }}</div>
+          {% if job.opening_type == 'Backdoor' %}
+          <div class="col-md-6"><span class="detail-label">Amount to Pay:</span> ₹{{ job.amount_to_pay }}</div>
+          <div class="col-12"><span class="detail-label">Backdoor Description:</span> {{ job.backdoor_description|linebreaksbr }}</div>
+          {% endif %}
+        </div>
+        {% if job.skills_list %}
+        <div class="mb-3">
+          <span class="detail-label">Required Skills:</span><br>
+          {% for sk in job.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}
+        </div>
+        {% endif %}
+        {% if job.description %}
+        <div class="mb-3">
+          <span class="detail-label">Job Description:</span>
+          <div class="desc-box">{{ job.description|safe }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- INTEREST BAR -->
+      {% if is_interested %}
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <span><i class="ph-fill ph-thumbs-up" style="color:var(--primary-main);"></i> <strong>You've registered your interest.</strong></span>
+          <a href="{% url 'toggle_interest' job.pk %}" class="btn btn-sm btn-outline-secondary"><i class="ph ph-x-circle"></i> Remove</a>
+        </div>
+      {% elif not job.is_live %}
+        <div class="card-footer text-muted">Applications are closed for this posting.</div>
+      {% else %}
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong>Interested in this role?</strong>
+            <div class="text-muted small">We'll use your profile information.</div>
+          </div>
+          <a href="{% url 'toggle_interest' job.pk %}" class="btn btn-primary"><i class="ph-fill ph-thumbs-up"></i> I'm Interested</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

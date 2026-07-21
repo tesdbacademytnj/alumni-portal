@@ -1,0 +1,191 @@
+{% extends 'base_dashboard.html' %}
+{% block title %}Dashboard — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+
+<div class="mb-4">
+  <div class="section-flex-title" style="font-size:1.35rem;">Job Portal <span class="text-brand">Dashboard.</span></div>
+  <div class="text-muted" style="font-size:0.9rem;">Welcome back, {{ user.full_name }} — here's what's happening today.</div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:var(--primary-pale);color:var(--primary-main);"><i class="ph-fill ph-paper-plane-right"></i></div>
+      <div>
+        <div class="stat-card-value">{{ job_applied.count }}</div>
+        <div class="stat-card-label">Jobs Applied</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#D1FAE5;color:#065F46;"><i class="ph-fill ph-briefcase"></i></div>
+      <div>
+        <div class="stat-card-value">{{ job_posts.count }}</div>
+        <div class="stat-card-label">Job Posts</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-card-icon" style="background:#FEF3C7;color:#92400E;"><i class="ph-fill ph-calendar"></i></div>
+      <div>
+        <div class="stat-card-value">{{ user.batch|default:"—" }}</div>
+        <div class="stat-card-label">Batch Year</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="profile-card h-100" style="padding:16px 18px;">
+      <div style="position:relative;z-index:1;">
+        <div class="profile-card-name">{{ user.full_name|truncatechars:16 }}</div>
+        <div class="profile-card-role">{{ user.designation|default:user.institute|default:"Alumni Member"|truncatechars:22 }}</div>
+        <div class="profile-progress"><div class="profile-progress-bar" style="width: {{ user.profile_completion_percentage }}%;"></div></div>
+        <div class="profile-progress-label">Profile {{ user.profile_completion_percentage }}% complete</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER INFO CHIPS / PROFILE DETAIL -->
+<div class="app-card mb-4">
+  <div class="app-card-title" style="cursor:pointer;" onclick="toggleProfileDetail()">
+    <i class="ph-fill ph-identification-badge text-brand"></i> Profile
+    <span id="profileToggleIcon" style="float:right;"><i class="ph ph-chevron-down"></i></span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;">
+    {% if user.institute %}<span class="tag-pill tag-pill-brand"><i class="ph ph-buildings"></i> {{ user.institute }}</span>{% endif %}
+    {% if user.batch %}<span class="tag-pill tag-pill-gold"><i class="ph-fill ph-calendar"></i> Batch {{ user.batch }}</span>{% endif %}
+    {% if user.city %}<span class="tag-pill"><i class="ph-fill ph-map-pin"></i> {{ user.city }}</span>{% endif %}
+    {% if user.employment_status == 'Currently Working' %}
+      <span class="tag-pill tag-pill-green"><i class="ph-fill ph-buildings"></i> {{ user.current_company }}</span>
+    {% elif user.employment_status == 'Not Working' %}
+      <span class="tag-pill tag-pill-gold"><i class="ph-fill ph-pause"></i> Not Working</span>
+    {% elif user.employment_status == 'Fresher' %}
+      <span class="tag-pill tag-pill-gold"><i class="ph-fill ph-star"></i> Fresher</span>
+    {% endif %}
+    <span class="tag-pill"><i class="ph ph-clock-countdown"></i> Member since {{ user.date_joined|date:"M Y" }}</span>
+  </div>
+  <div id="profileDetail" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color, #e9ecef);">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Full Name</strong><br>{{ user.full_name }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Email</strong><br>{{ user.email }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Mobile</strong><br>{{ user.mobile|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Institute</strong><br>{{ user.institute|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Batch</strong><br>{{ user.batch|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>City</strong><br>{{ user.city|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Employment Status</strong><br>{{ user.employment_status|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Designation</strong><br>{{ user.designation|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Domain</strong><br>{{ user.domain|default:"—" }}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Experience</strong><br>{{ user.experience_years|default:"—" }} years</div>
+      </div>
+      {% if user.employment_status == 'Currently Working' %}
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Current Company</strong><br>{{ user.current_company }}</div>
+      </div>
+      {% elif user.employment_status == 'Not Working' %}
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Current Company</strong><br>—</div>
+      </div>
+      {% endif %}
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Salary</strong><br>{% if user.salary == 'Not Disclosed' %}<span class="text-muted">Not Disclosed</span>{% else %}{{ user.salary|default:"—" }}{% endif %}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Skills</strong><br>{% if user.skills %}{% for s in user.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ s }}</span>{% endfor %}{% else %}—{% endif %}</div>
+      </div>
+      <div class="col-md-6">
+        <div class="profile-detail-item"><strong>Resume</strong><br>{% if user.resume %}<a href="{{ user.resume.url }}" target="_blank" class="btn-know-more text-decoration-none d-inline-block"><i class="ph ph-download-simple"></i> View Resume</a>{% else %}—{% endif %}</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <a href="{% url 'edit_profile' %}" class="btn-know-more text-decoration-none d-inline-block"><i class="ph-fill ph-pencil"></i> Edit Profile</a>
+    </div>
+  </div>
+</div>
+
+<div id="applications"></div>
+
+<!-- MY JOB POSTS -->
+{% if job_posts %}
+<div class="app-card mb-4">
+  <div class="section-flex-header">
+    <div class="section-flex-title" style="font-size:1rem;"><i class="ph-fill ph-briefcase text-brand"></i> My Job Posts</div>
+  </div>
+  {% for job in job_posts %}
+  <a href="{% url 'my_opening_detail' job.pk %}" class="list-row">
+    <div class="list-row-title">{{ job.title }}</div>
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+      <span class="tag-pill tag-pill-brand">{{ job.status|title }}</span>
+      <span class="tag-pill"><i class="ph-fill ph-map-pin"></i> {{ job.city }}</span>
+      {% if job.last_date_to_apply %}<span class="tag-pill tag-pill-gold"><i class="ph-fill ph-clock"></i> {{ job.last_date_to_apply|date:"d M Y" }}</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- MY JOB INTERESTS -->
+{% if job_interests %}
+<div class="app-card mb-4">
+  <div class="section-flex-header">
+    <div class="section-flex-title" style="font-size:1rem;"><i class="ph-fill ph-thumbs-up text-brand"></i> Jobs I'm Interested In</div>
+  </div>
+  {% for interest in job_interests %}
+  <a href="{% url 'job_detail' interest.job.pk %}" class="list-row">
+    <div class="list-row-title">{{ interest.job.title }}</div>
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+      <span class="tag-pill tag-pill-brand">Interested</span>
+      <span class="tag-pill"><i class="ph-fill ph-map-pin"></i> {{ interest.job.city }}</span>
+      <span class="tag-pill tag-pill-gold">{{ interest.created_at|date:"d M Y" }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not job_posts and not job_applied and not job_interests %}
+<div class="app-card text-center py-5">
+  <div style="font-size:2.6rem;color:var(--primary-main);opacity:0.3;"><i class="ph ph-briefcase"></i></div>
+  <div class="fw-bold mt-2">No activity yet</div>
+  <div class="text-muted small mb-3">Post an opening or mark interest in jobs to see them here.</div>
+  <a href="{% url 'job_board' %}" class="btn-know-more text-decoration-none d-inline-block"><i class="ph ph-magnifying-glass"></i> Browse Job Board</a>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+function toggleProfileDetail() {
+  var detail = document.getElementById('profileDetail');
+  var icon = document.getElementById('profileToggleIcon');
+  if (detail.style.display === 'none') {
+    detail.style.display = 'block';
+    icon.innerHTML = '<i class="ph ph-chevron-up"></i>';
+  } else {
+    detail.style.display = 'none';
+    icon.innerHTML = '<i class="ph ph-chevron-down"></i>';
+  }
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Home — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div class="hero-badge"><i class="ph ph-sparkle"></i> Alumni Network Platform</div>
+        <h1 class="hero-title">Connect. Grow.<br><span class="highlight">Succeed Together.</span></h1>
+        <p class="hero-subtitle">A professional platform for alumni and students to discover opportunities, share job openings, and build lasting career connections.</p>
+        <div class="hero-actions">
+          {% if is_logged_in %}
+            <a href="{% url 'dashboard' %}" class="btn-hero-primary"><i class="ph ph-gauge"></i> Go to Dashboard</a>
+            <a href="{% url 'job_board' %}" class="btn-hero-secondary"><i class="ph ph-briefcase"></i> Job Board</a>
+          {% else %}
+            <a href="{% url 'user_register' %}" class="btn-hero-primary"><i class="ph ph-user-plus"></i> Join the Network</a>
+            <a href="{% url 'user_login' %}" class="btn-hero-secondary"><i class="ph ph-sign-in"></i> Log In</a>
+          {% endif %}
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat-item">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Partner Institutes</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num">50+</div>
+            <div class="stat-label">Cities Covered</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num">1000+</div>
+            <div class="stat-label">Alumni Connected</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="hero-visual">
+          <div class="hero-card-float">
+            <div class="hero-card-icon"><i class="ph-fill ph-briefcase"></i></div>
+            <div class="hero-card-title">Senior React Developer</div>
+            <div class="hero-card-text">Posted by an alumnus — Bengaluru · Full-time · 4+ yrs</div>
+          </div>
+          <div class="floating-tag" style="top:8%; left:-4%;"><i class="ph-fill ph-shield-check" style="color:var(--success);"></i> Verified Alumni</div>
+          <div class="floating-tag" style="bottom:6%; right:-2%; animation-delay:1.2s;"><i class="ph-fill ph-star" style="color:var(--accent-gold);"></i> Featured Opening</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-label">Features</span>
+      <h2 class="section-title">Everything You Need</h2>
+      <p class="section-subtitle mx-auto">A complete platform designed to connect alumni and students with the right opportunities.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph-fill ph-briefcase"></i></div>
+          <div class="feature-title">Job Board</div>
+          <div class="feature-text">Browse hundreds of job openings shared exclusively by fellow alumni, reviewed and published by our team.</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph-fill ph-megaphone"></i></div>
+          <div class="feature-title">Post Openings</div>
+          <div class="feature-text">Share job opportunities from your company. Help fellow alumni find their next career move.</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph ph-user-gear"></i></div>
+          <div class="feature-title">Seek Jobs</div>
+          <div class="feature-text">Create your professional profile and let recruiters in your network discover you.</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph-fill ph-shield-check"></i></div>
+          <div class="feature-title">Verified Network</div>
+          <div class="feature-text">Every member is verified through their institute. Trust and authenticity are guaranteed.</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph ph-trend-up"></i></div>
+          <div class="feature-title">Career Growth</div>
+          <div class="feature-text">Track your applications, manage your profile, and grow your professional presence.</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="ph-fill ph-handshake"></i></div>
+          <div class="feature-title">Alumni Network</div>
+          <div class="feature-text">Connect with thousands of alumni across industries for mentorship and referrals.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad" style="background:var(--primary-faint);">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="section-label">Why AlumniPortal</span>
+        <h2 class="section-title">Built for Institute Communities</h2>
+        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">We bridge the gap between education and employment. Our platform provides end-to-end career support through your alumni network.</p>
+        <div class="row g-3">
+          <div class="col-6"><div class="stat-card text-center p-3"><div class="stat-card-value">4</div><div class="stat-card-label">Partner Institutes</div></div></div>
+          <div class="col-6"><div class="stat-card text-center p-3"><div class="stat-card-value">50+</div><div class="stat-card-label">Cities Covered</div></div></div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <ul class="check-list">
+          <li>
+            <span class="check-icon"><i class="ph-bold ph-check"></i></span>
+            <span class="check-text"><strong>Verified alumni network</strong> — every member is tied to a real institute record, so connections are trustworthy from day one.</span>
+          </li>
+          <li>
+            <span class="check-icon"><i class="ph-bold ph-check"></i></span>
+            <span class="check-text"><strong>Direct job postings</strong> — alumni share openings straight from their companies, skipping the noise of public job boards.</span>
+          </li>
+          <li>
+            <span class="check-icon"><i class="ph-bold ph-check"></i></span>
+            <span class="check-text"><strong>Mentorship-ready</strong> — reach out to seniors in your field for guidance, referrals, and career advice.</span>
+          </li>
+          <li>
+            <span class="check-icon"><i class="ph-bold ph-check"></i></span>
+            <span class="check-text"><strong>One dashboard</strong> — track applications, postings, and profile activity in a single, uncluttered view.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

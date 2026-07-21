@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Verify Email — AlumniPortal{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="container py-4">
+    <div class="auth-card mx-auto">
+      <a href="{% url 'home' %}" class="auth-logo">
+        <div class="auth-logo-icon"><i class="ph-fill ph-graduation-cap"></i></div>
+        <span class="auth-logo-text">AlumniPortal</span>
+      </a>
+      <h1 class="auth-title mt-3">{% if reset_mode %}Reset Your Password{% else %}Verify Your Email{% endif %}</h1>
+      <p class="auth-subtitle">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Verification Code</label>
+          {{ form.code }}
+          {% if form.code.errors %}<div class="invalid-feedback d-block">{{ form.code.errors.0 }}</div>{% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger mt-2">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <button type="submit" class="btn-primary-full mt-3">Verify & Continue <i class="ph ph-arrow-right"></i></button>
+      </form>
+
+      <div class="text-center mt-4">
+        <span style="font-size:0.9rem;color:var(--gray-500);">Didn't get the code? </span>
+        <form method="post" action="{% if reset_mode %}{% url 'resend_reset_otp' %}{% else %}{% url 'resend_otp' %}{% endif %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="auth-link" style="background:none;border:none;cursor:pointer;font-size:0.9rem;padding:0;">Resend code</button>
+        </form>
+      </div>
+
+      {% if reset_mode %}
+      <div class="auth-divider mt-4">or</div>
+      <div class="text-center">
+        <a href="{% url 'forgot_password' %}" class="auth-link">Use a different email</a>
+      </div>
+      {% else %}
+      <div class="auth-divider mt-4">or</div>
+      <div class="text-center">
+        <a href="{% url 'user_register' %}" class="auth-link">Use a different email</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+.otp-input {
+  letter-spacing: 10px;
+  font-size: 1.6rem;
+  text-align: center;
+  font-weight: 700;
+}
+</style>
+{% endblock %}

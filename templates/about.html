@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}About — AlumniPortal{% endblock %}
+{% block back_button %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">About Us</div>
+    <div class="page-header-breadcrumb"><a href="{% url 'home' %}">Home</a> › About</div>
+  </div>
+</div>
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6">
+        <span class="section-label">Our Story</span>
+        <h2 class="section-title">Built for Institute Communities</h2>
+        <div class="divider-brand"></div>
+        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:20px;">AlumniPortal was created to solve a real problem: talented graduates from our partner institutes were unable to efficiently connect with opportunities and each other. We built a platform that makes those connections simple, structured, and accessible.</p>
+        <p style="color:var(--gray-600);line-height:1.8;margin-bottom:24px;">Today, we serve students and alumni from SSS, Sainora, SakthiDB Technology, and TesDB Academy — with plans to expand further across Tamil Nadu and India.</p>
+        <div class="row g-3">
+          <div class="col-6"><div class="stat-card text-center p-3" style="background:var(--primary-faint);"><div class="stat-card-value">4</div><div class="stat-card-label">Partner Institutes</div></div></div>
+          <div class="col-6"><div class="stat-card text-center p-3" style="background:var(--primary-faint);"><div class="stat-card-value">50+</div><div class="stat-card-label">Cities Covered</div></div></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div style="background:linear-gradient(135deg,var(--primary-faint),var(--primary-pale));border-radius:24px;padding:36px;">
+          <h3 style="font-family:'Sora',sans-serif;font-weight:700;color:var(--gray-900);margin-bottom:20px;">Our Partner Institutes</h3>
+          {% for inst in institutes %}
+          <div style="background:white;border-radius:12px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm);">
+            <div style="width:40px;height:40px;background:var(--primary-pale);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;"><i class="ph ph-buildings"></i></div>
+            <div><div style="font-weight:700;color:var(--gray-900);">{{ inst }}</div><div style="font-size:0.8rem;color:var(--gray-400);">Affiliated Institute</div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}{{ seeker.title }} — My Application{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">My Application Details</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › <a href="{% url 'dashboard' %}">Dashboard</a> › Application
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h4 class="fw-bold" style="color:var(--gray-900);">{{ seeker.title }}</h4>
+            <div class="text-muted">{{ seeker.domain }}</div>
+          </div>
+          <div class="text-muted small">Submitted {{ seeker.created_at|date:"d M Y" }}</div>
+        </div>
+        <div class="mb-3 d-flex flex-wrap gap-1">
+          {% if seeker.employment_status %}<span class="badge {% if seeker.employment_status == 'Fresher' %}bg-success{% elif seeker.employment_status == 'Currently Working' %}bg-info{% else %}bg-warning{% endif %}">{{ seeker.employment_status }}</span>{% endif %}
+          {% if seeker.years_of_experience %}<span class="badge bg-warning">{{ seeker.years_of_experience }} exp</span>{% endif %}
+          {% if seeker.current_city %}<span class="badge bg-secondary"><i class="ph ph-map-pin"></i> {{ seeker.current_city }}</span>{% endif %}
+          {% if seeker.joining_preference %}<span class="badge bg-info"><i class="ph ph-clock"></i> {{ seeker.joining_preference }}{% if seeker.joining_months_others %}: {{ seeker.joining_months_others }}{% endif %}</span>{% endif %}
+          {% if seeker.expected_salary %}<span class="badge bg-success"><i class="ph ph-currency-circle-dollar"></i> {{ seeker.expected_salary }}</span>{% endif %}
+        </div>
+        <hr>
+        <h6 class="form-section-title"><i class="ph ph-user"></i> Contact Info</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6"><span class="detail-label">Email:</span> {{ seeker.email }}</div>
+          <div class="col-md-6"><span class="detail-label">Mobile:</span> {{ seeker.mobile }}</div>
+          <div class="col-md-6"><span class="detail-label">Current City:</span> {{ seeker.current_city|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Qualification:</span> {{ seeker.qualification|default:"—" }}{% if seeker.qualification_course %} — {{ seeker.qualification_course }}{% endif %}</div>
+        </div>
+        <h6 class="form-section-title"><i class="ph ph-briefcase"></i> Employment Details</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6"><span class="detail-label">Current Status:</span> {{ seeker.employment_status|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Years of Experience:</span> {{ seeker.years_of_experience|default:"—" }}</div>
+          {% if seeker.current_company %}
+          <div class="col-md-6"><span class="detail-label">Current Company:</span> {{ seeker.current_company }}</div>
+          {% endif %}
+          {% if seeker.current_designation %}
+          <div class="col-md-6"><span class="detail-label">Current Designation:</span> {{ seeker.current_designation }}</div>
+          {% endif %}
+          <div class="col-md-6"><span class="detail-label">Expected Salary:</span> {{ seeker.expected_salary|default:"—" }}</div>
+          <div class="col-md-6"><span class="detail-label">Available to Join:</span> {{ seeker.joining_preference|default:"—" }}{% if seeker.joining_months_others %} — {{ seeker.joining_months_others }}{% endif %}</div>
+        </div>
+        {% if seeker.skills_list %}
+        <div class="mb-4">
+          <h6 class="form-section-title"><i class="ph ph-wrench"></i> Skills</h6>
+          {% for sk in seeker.skills_list %}<span class="skill-tag skill-tag-{% cycle 'blue' 'green' 'purple' 'orange' 'teal' 'rose' %}">{{ sk }}</span> {% endfor %}
+        </div>
+        {% endif %}
+        {% if seeker.resume %}
+        <div class="mb-3">
+          <h6 class="form-section-title"><i class="ph ph-file"></i> Resume</h6>
+          <a href="{{ seeker.resume.url }}" target="_blank" class="btn btn-primary btn-sm"><i class="ph ph-download-simple"></i> Download Resume</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
+
+  </div>
+</div>
+{% endblock %}

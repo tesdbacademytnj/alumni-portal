@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Alumni Portal{% endblock %}</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    .container { max-width: 1160px; }
+    @media (min-width: 1400px) {
+      .container { max-width: 1320px; }
+    }
+    @media (min-width: 1600px) {
+      .container { max-width: 1440px; }
+    }
+    @media (min-width: 1920px) {
+      .container { max-width: 1600px; }
+    }
+    .navbar-toggler { border: 1.5px solid var(--gray-200); }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <svg width="30" height="30" viewBox="0 0 40 40" style="margin-right:8px;vertical-align:-8px;">
+        <rect width="40" height="40" rx="10" fill="var(--primary-main)"/>
+        <path d="M20 9L33 15.5L20 22L7 15.5L20 9Z" fill="white"/>
+        <path d="M13 18.5V25C13 25 15.5 28 20 28C24.5 28 27 25 27 25V18.5" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      Alumni<span>Portal</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1 me-3">
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'services' %}active{% endif %}" href="{% url 'services' %}">Services</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">About</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}">Contact</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 nav-user-actions">
+        {% if user.is_authenticated %}
+          <div class="user-avatar">{{ user.full_name|first|upper }}</div>
+          <span>{{ user.full_name|truncatechars:16 }}</span>
+          {% if user.is_admin_user %}
+            <a href="{% url 'admin_dashboard' %}" class="btn-nav-primary">Dashboard</a>
+          {% else %}
+            <a href="{% url 'dashboard' %}" class="btn-nav-primary">Dashboard</a>
+          {% endif %}
+          <a href="{% url 'logout' %}" class="btn-nav-login">Logout</a>
+        {% else %}
+          <a href="{% url 'user_login' %}" class="btn-nav-primary"><i class="ph ph-user"></i> User</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- QUICK-ACTION BAR (regular users only) -->
+{% if user.is_authenticated and not user.is_admin_user %}
+<div class="quick-action-bar">
+  <div class="container d-flex align-items-center flex-wrap gap-2">
+    <a href="javascript:history.back()" class="back-link"><i class="ph ph-arrow-left"></i> Back</a>
+    <a href="{% url 'job_board' %}" class="quick-link"><i class="ph ph-briefcase"></i> Job Board</a>
+    <a href="{% url 'post_opening' %}" class="quick-link"><i class="ph ph-plus-circle"></i> Post Opening</a>
+    <a href="{% url 'edit_profile' %}" class="quick-link"><i class="ph ph-user"></i> Edit Profile</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- FLASH MESSAGES -->
+{% if messages %}
+<div class="container mt-3">
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-auto">
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block back_button %}{% endblock %}
+{% block content %}{% endblock %}
+
+<!-- FOOTER -->
+{% block footer %}
+<footer class="footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">Alumni<span>Portal</span></div>
+        <p class="footer-desc mt-2">Connecting students, alumni and opportunities.</p>
+      </div>
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">Navigate</div>
+        <ul>
+          <li><a href="{% url 'home' %}" class="footer-link">Home</a></li>
+          <li><a href="{% url 'services' %}" class="footer-link">Services</a></li>
+          <li><a href="{% url 'about' %}" class="footer-link">About</a></li>
+          <li><a href="{% url 'contact' %}" class="footer-link">Contact</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">Account</div>
+        <ul>
+          <li><a href="{% url 'user_register' %}" class="footer-link">Register</a></li>
+          <li><a href="{% url 'user_login' %}" class="footer-link">User Login</a></li>
+          <li><a href="{% url 'admin_login' %}" class="footer-link">Admin Login</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <div class="footer-heading">Institutes</div>
+        <ul>
+          <li>SSS</li>
+          <li>Sainora</li>
+          <li>SakthiDB Technology</li>
+          <li>TesDB Academy</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">(c) 2025 AlumniPortal. All rights reserved.</div>
+  </div>
+</footer>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/datepicker.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% load static %}
+<aside class="app-sidebar" id="appSidebar">
+  <div class="sidebar-brand">
+    <a href="{% url 'home' %}" class="sidebar-brand-link">
+      <span class="sidebar-brand-icon"><i class="ph-fill ph-graduation-cap"></i></span>
+      <span class="sidebar-brand-text">Alumni<span>Portal</span></span>
+    </a>
+    <button class="sidebar-close d-lg-none" id="sidebarClose" type="button" aria-label="Close menu">
+      <i class="ph ph-x"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% if not user.is_admin_user %}
+    <div class="sidebar-nav-label">Menu</div>
+    <a href="{% url 'job_board' %}" class="sidebar-link {% if request.resolver_match.url_name == 'job_board' or request.resolver_match.url_name == 'job_detail' %}active{% endif %}">
+      <i class="ph-fill ph-briefcase"></i><span>Jobs</span>
+    </a>
+    <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="ph-fill ph-squares-four"></i><span>Dashboard</span>
+    </a>
+    <a href="{% url 'edit_profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'edit_profile' %}active{% endif %}">
+      <i class="ph-fill ph-user"></i><span>Profile</span>
+    </a>
+    {% endif %}
+
+
+    {% if not user.is_admin_user %}
+    <div class="sidebar-nav-label">Manage</div>
+    <a href="{% url 'post_opening' %}" class="sidebar-link {% if request.resolver_match.url_name == 'post_opening' %}active{% endif %}">
+      <i class="ph-fill ph-plus-circle"></i><span>Post Opening</span>
+    </a>
+    {% endif %}
+
+    {% if user.is_admin_user %}
+    <div class="sidebar-nav-label">Admin</div>
+    <a href="{% url 'job_board' %}" class="sidebar-link {% if request.resolver_match.url_name == 'job_board' or request.resolver_match.url_name == 'job_detail' %}active{% endif %}">
+      <i class="ph-fill ph-briefcase"></i><span>Jobs</span>
+    </a>
+    <a href="{% url 'admin_post_opening' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_post_opening' %}active{% endif %}">
+      <i class="ph-fill ph-plus-circle"></i><span>Post Opening</span>
+    </a>
+    <a href="{% url 'admin_dashboard' %}#tab-users" class="sidebar-link admin-link" data-tab="tab-users">
+      <i class="ph-fill ph-users"></i><span>Users</span>
+    </a>
+    <a href="{% url 'admin_dashboard' %}#tab-pending" class="sidebar-link admin-link" data-tab="tab-pending">
+      <i class="ph ph-hourglass"></i><span>Pending</span>
+    </a>
+    <a href="{% url 'admin_dashboard' %}#tab-openings" class="sidebar-link admin-link" data-tab="tab-openings">
+      <i class="ph-fill ph-briefcase"></i><span>Openings</span>
+    </a>
+    <a href="{% url 'admin_dashboard' %}#tab-messages" class="sidebar-link admin-link" data-tab="tab-messages">
+      <i class="ph-fill ph-envelope"></i><span>Messages{% if unread_count %} <span class="badge bg-danger ms-1">{{ unread_count }}</span>{% endif %}</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="{% url 'logout' %}" class="sidebar-link sidebar-logout">
+      <i class="ph ph-sign-out"></i><span>Logout</span>
+    </a>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

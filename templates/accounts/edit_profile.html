@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% block title %}Update Profile — AlumniPortal{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Skills tag widget ─────────────────────────────────── */
+(function () {
+  const hidden = document.getElementById('id_skills');
+  const tagBox = document.getElementById('skills-tag-box');
+  const input = document.getElementById('skill-text-input');
+  let skills = (hidden.value || '').split(',').map(s => s.trim()).filter(Boolean);
+  var skillColors = ['blue','green','purple','orange','teal','rose'];
+  function render() {
+    tagBox.innerHTML = '';
+    skills.forEach(function (s, i) {
+      const sp = document.createElement('span');
+      sp.className = 'skill-tag skill-tag-' + skillColors[i % 6];
+      sp.innerHTML = s + ' <button type="button" onclick="removeSkill(' + i + ')">&times;</button>';
+      tagBox.appendChild(sp);
+    });
+    hidden.value = skills.join(',');
+  }
+  window.addSkill = function () {
+    const v = input.value.trim().replace(/,/g, '');
+    if (v && !skills.includes(v)) { skills.push(v); render(); }
+    input.value = ''; input.focus();
+  };
+  window.removeSkill = function (i) { skills.splice(i, 1); render(); };
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(); }
+  });
+  render();
+})();
+
+/* ── Employment Status toggle ──────────────────────────── */
+function toggleFields() {
+  var sel = document.getElementById('id_employment_status');
+  var companyRow = document.getElementById('company-row');
+  var expRow = document.getElementById('exp-row');
+  var salaryRow = document.getElementById('salary-row');
+  if (!sel) return;
+  var val = sel.value;
+  companyRow.style.display = val === 'Currently Working' ? 'block' : 'none';
+  expRow.style.display = val === 'Fresher' ? 'none' : 'block';
+  salaryRow.style.display = val === 'Fresher' ? 'none' : 'block';
+  desigRow.style.display = val === 'Fresher' ? 'none' : 'block';
+}
+document.addEventListener('DOMContentLoaded', toggleFields);
+document.getElementById('id_employment_status').addEventListener('change', toggleFields);
+
+/* ── City "Others" toggle ──────────────────────────────── */
+document.getElementById('citySelectEdit').addEventListener('change', function () {
+  document.getElementById('cityOtherEdit').style.display = this.value === 'Others' ? 'block' : 'none';
+});
+
+/* ── Salary auto-format ────────────────────────────────── */
+(function () {
+  const salaryInput = document.getElementById('id_salary');
+  const typeBtn = document.getElementById('salaryTypeBtn');
+  const options = document.querySelectorAll('.salary-type-option');
+  const notDisclose = document.getElementById('salaryNotDisclose');
+  let currentType = 'lpa';
+
+  function detectType(val) {
+    if (/^₹/.test(val)) return 'monthly';
+    if (/LPA/i.test(val)) return 'lpa';
+    return currentType;
+  }
+
+  function getRawNumber(val) {
+    return val.replace(/[^0-9.]/g, '').replace(/\.+$/, '');
+  }
+
+  function formatSalary(val, type) {
+    const num = getRawNumber(val);
+    if (!num) return '';
+    return type === 'lpa' ? num + ' LPA' : '₹' + num;
+  }
+
+  function setType(type) {
+    currentType = type;
+    typeBtn.textContent = type === 'lpa' ? 'LPA' : '₹';
+    options.forEach(function (o) {
+      o.classList.toggle('active', o.dataset.type === type);
+    });
+  }
+
+  function toggleNotDisclose() {
+    if (notDisclose.checked) {
+      salaryInput.value = 'Not Disclosed';
+      salaryInput.disabled = true;
+      typeBtn.disabled = true;
+    } else {
+      salaryInput.disabled = false;
+      typeBtn.disabled = false;
+      if (salaryInput.value === 'Not Disclosed') salaryInput.value = '';
+    }
+  }
+
+  // initialize from existing value
+  if (salaryInput.value === 'Not Disclosed') {
+    notDisclose.checked = true;
+    salaryInput.disabled = true;
+    typeBtn.disabled = true;
+  } else if (salaryInput.value) {
+    const detected = detectType(salaryInput.value);
+    setType(detected);
+  }
+
+  notDisclose.addEventListener('change', toggleNotDisclose);
+
+  salaryInput.addEventListener('blur', function () {
+    if (notDisclose.checked) return;
+    const raw = salaryInput.value;
+    const num = getRawNumber(raw);
+    if (num && /^\d+\.?\d*$/.test(num)) {
+      salaryInput.value = formatSalary(num, currentType);
+    }
+  });
+
+  options.forEach(function (opt) {
+    opt.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (notDisclose.checked) return;
+      const type = this.dataset.type;
+      setType(type);
+      const raw = salaryInput.value;
+      const num = getRawNumber(raw);
+      if (num) {
+        salaryInput.value = formatSalary(num, type);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header-title">{% if not profile_complete %}Complete Your Profile{% else %}Edit Profile{% endif %}</div>
+    <div class="page-header-breadcrumb">
+      <a href="{% url 'home' %}">Home</a> › {% if profile_complete %}<a href="{% url 'dashboard' %}">Dashboard</a> › {% endif %}Profile
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-page">
+  <div class="container">
+    <div class="card mb-4">
+      <div class="card-header fw-bold"><i class="ph-fill ph-user"></i> {% if not profile_complete %}Complete Your Profile — Please fill in your professional details to use the portal{% else %}Edit Your Profile — Update your personal and professional information{% endif %}</div>
+      <div class="card-body">
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold small">Profile Completion</span>
+            <span class="fw-bold small">{{ user.profile_completion_percentage }}%</span>
+          </div>
+          <div class="profile-progress" style="height:10px;"><div class="profile-progress-bar" style="width: {{ user.profile_completion_percentage }}%;"></div></div>
+        </div>
+        {% if not profile_complete %}
+        <div class="alert alert-warning" style="border-radius:10px;font-size:0.9rem;">
+          <i class="ph ph-hand-pointing"></i> Welcome! Please fill in your professional details below — these are required to use the portal.
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <h6 class="form-section-title"><i class="ph-fill ph-user"></i> Basic Information</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-12">
+              <label class="form-label">Full Name</label>
+              {{ form.full_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email Address</label>
+              {{ form.email }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Mobile Number</label>
+              {{ form.mobile }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Batch (Year of Passout)</label>
+              {{ form.batch }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Institute</label>
+              {{ form.institute }}
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph-fill ph-briefcase"></i> Professional Details <span class="text-muted small fw-normal">(required)</span></h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Employment Status <span class="text-danger">*</span></label>
+              {{ form.employment_status }}
+              {% if form.employment_status.errors %}<div class="text-danger small">{{ form.employment_status.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="company-row">
+              <label class="form-label">Current Working Company <span class="text-danger">*</span></label>
+              {{ form.current_company }}
+              {% if form.current_company.errors %}<div class="text-danger small">{{ form.current_company.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="desig-row">
+              <label class="form-label">Designation <span class="text-danger">*</span></label>
+              {{ form.designation }}
+              {% if form.designation.errors %}<div class="text-danger small">{{ form.designation.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Domain <span class="text-danger">*</span></label>
+              {{ form.domain }}
+              {% if form.domain.errors %}<div class="text-danger small">{{ form.domain.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Current City</label>
+              {{ form.city }}
+              {{ form.city_other }}
+              {% if form.city.errors %}<div class="text-danger small">{{ form.city.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="exp-row">
+              <label class="form-label">Experience (Years) <span class="text-danger">*</span></label>
+              {{ form.experience_years }}
+              {% if form.experience_years.errors %}<div class="text-danger small">{{ form.experience_years.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6" id="salary-row">
+              <label class="form-label">Current Salary / Package <span class="text-muted small fw-normal">(optional)</span></label>
+              <div class="input-group">
+                {{ form.salary }}
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="salaryTypeBtn" data-bs-toggle="dropdown" aria-expanded="false">LPA</button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salaryTypeBtn">
+                  <li><a class="dropdown-item salary-type-option active" data-type="lpa" href="#">Annual (LPA)</a></li>
+                  <li><a class="dropdown-item salary-type-option" data-type="monthly" href="#">Monthly (₹)</a></li>
+                </ul>
+              </div>
+              <div class="form-check mt-2 text-end ms-4">
+                <input class="form-check-input" type="checkbox" id="salaryNotDisclose"{% if user.salary == 'Not Disclosed' %} checked{% endif %}>
+                <label class="form-check-label" for="salaryNotDisclose">Prefer not to disclose</label>
+              </div>
+              <div class="form-text">Enter just the number — we'll format it for you.</div>
+            </div>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-file-text"></i> Resume <span class="text-muted small fw-normal">(optional)</span></h6>
+          <div class="mb-4">
+            <label class="form-label">Upload Resume (PDF, DOC, DOCX)</label>
+            {{ form.resume }}
+            {% if user.resume %}
+            <div class="mt-2">
+              <a href="{{ user.resume.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="ph ph-download-simple"></i> View Current Resume</a>
+            </div>
+            {% endif %}
+          </div>
+
+          <h6 class="form-section-title"><i class="ph ph-wrench"></i> Skills <span class="text-muted small fw-normal">(optional)</span></h6>
+          {{ form.skills }}
+          <div id="skills-tag-box" class="mb-2"></div>
+          <div class="d-flex gap-2 mb-4">
+            <input type="text" id="skill-text-input" class="form-control" placeholder="Type a skill and press Enter (e.g. Python, Django, React)">
+            <button type="button" onclick="addSkill()" class="btn btn-sm btn-primary" style="white-space:nowrap;">+ Add</button>
+          </div>
+
+          <h6 class="form-section-title"><i class="ph-fill ph-key"></i> Change Password <span class="text-muted small fw-normal">(leave blank to keep current)</span></h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">New Password</label>
+              {{ form.new_password }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirm New Password</label>
+              {{ form.confirm_new_password }}
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}<div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>{% endif %}
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> Save Profile</button>
+            {% if profile_complete %}
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
