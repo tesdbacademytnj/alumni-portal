@@ -248,7 +248,7 @@ function toggleInterest(pk, btn, onDone) {
           </div>
           {% endif %}
           <div class="job-card-footer">
-            <span class="job-card-applicants"><i class="ph ph-clock"></i> Apply by {{ job.last_date_to_apply|date:"d M" }}</span>
+            <span class="job-card-applicants"><span class="job-posted-date"><i class="ph ph-calendar-blank"></i> Posted {{ job.published_at|date:"d M" }}</span> &nbsp; <i class="ph ph-clock"></i> Apply by {{ job.last_date_to_apply|date:"d M" }}</span>
             <span class="btn-know-more">View Details</span>
           </div>
         </a>

@@ -38,9 +38,9 @@ class JobOpeningForm(forms.ModelForm):
     opening_type          = forms.ChoiceField(
         choices=OPENING_TYPE_CHOICES, required=True,
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'openingType'}))
-    amount_to_pay         = forms.IntegerField(
+    amount_to_pay         = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter amount to pay', 'id': 'amountToPay', 'style': 'display:none', 'inputmode': 'numeric', 'pattern': '[0-9]*'}))
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter amount to pay', 'id': 'amountToPay', 'style': 'display:none'}))
     backdoor_description  = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe the backdoor arrangement details...', 'id': 'backdoorDesc', 'style': 'display:none'}))
@@ -114,12 +114,12 @@ class JobOpeningForm(forms.ModelForm):
                     cd['salary_package'] = '₹' + num
 
         if cd.get('opening_type') == 'Backdoor':
-            if not cd.get('amount_to_pay'):
+            if not cd.get('amount_to_pay', '').strip():
                 raise forms.ValidationError("Please enter the amount to pay for backdoor opening.")
             if not cd.get('backdoor_description', '').strip():
                 raise forms.ValidationError("Please describe the backdoor arrangement.")
         else:
-            cd['amount_to_pay'] = None
+            cd['amount_to_pay'] = ''
             cd['backdoor_description'] = ''
         return cd
 

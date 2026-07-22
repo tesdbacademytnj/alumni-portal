@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 from django.utils import timezone
+from django.http import JsonResponse
+from django.db.models import Q
+from django.urls import reverse
 from .forms import UserRegisterForm, UserLoginForm, AdminLoginForm, EditProfileForm, OTPVerifyForm, ForgotPasswordForm, ResetPasswordForm
 from .models import CustomUser, AdminProfile, EmailOTP, ContactMessage
 from .utils import send_otp_email, send_job_unpublished_email, OTPSendError
@@ -101,7 +104,6 @@ def user_login(request):
     if request.user.is_authenticated and not request.user.is_admin_user:
         return redirect('job_board')
     form = UserLoginForm()
-    show_forgot_password = False
     if request.method == 'POST':
         email    = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password')
@@ -122,8 +124,7 @@ def user_login(request):
                 messages.error(request, "Email not verified. We resent your code.")
                 return redirect('verify_otp')
             messages.error(request, 'Invalid email or password.')
-            show_forgot_password = True
-    return render(request, 'accounts/user_login.html', {'form': form, 'show_forgot_password': show_forgot_password})
+    return render(request, 'accounts/user_login.html', {'form': form})
 
 
 def admin_login(request):
@@ -359,6 +360,39 @@ def admin_dashboard(request):
             ('Messages', messages_count),
         ],
     })
+
+
+@login_required
+def admin_search_users(request):
+    if not request.user.is_admin_user:
+        return JsonResponse({'error': 'unauthorized'}, status=403)
+    q = request.GET.get('q', '').strip()
+    users = CustomUser.objects.filter(is_admin_user=False)
+    if q:
+        users = users.filter(
+            Q(full_name__icontains=q) | Q(email__icontains=q) | Q(mobile__icontains=q)
+        )
+    users = users.order_by('-date_joined')[:50]
+    html = ''
+    for u in users:
+        status_badge = '<span class="badge bg-success"><i class="ph ph-check"></i> Verified</span>' if u.is_active else '<span class="badge bg-warning"><i class="ph ph-hourglass"></i> Pending</span>'
+        institute_badge = f'<span class="badge bg-primary">{u.institute}</span>' if u.institute else ''
+        batch_badge = f'<span class="badge bg-warning">{u.batch}</span>' if u.batch else ''
+        html += f'''<div class="card mb-3" style="cursor:pointer;" onclick="window.location.href='{reverse("user_detail", args=[u.id])}'">
+          <div class="card-body">
+            <div class="d-flex gap-3 align-items-center mb-2">
+              <div class="interest-avatar">{u.full_name[0].upper()}</div>
+              <div style="flex:1;">
+                <div class="fw-bold">{u.full_name}</div>
+                <div class="text-muted small">{u.email}</div>
+              </div>
+            </div>
+            <div class="mb-2">{status_badge} {institute_badge} {batch_badge}</div>
+            <div class="text-muted small mb-2 d-flex flex-wrap gap-3"><span><i class="ph ph-buildings"></i> <strong>{u.current_company or "—"}</strong> — {u.designation or "—"}</span><span><i class="ph ph-laptop"></i> {u.domain or "—"} — {u.experience_years or "—"}{" yrs" if u.experience_years else ""}</span><span><i class="ph ph-map-pin"></i> {u.city or "—"}</span></div>
+            <a href="{reverse("user_detail", args=[u.id])}" class="btn btn-outline-primary btn-sm w-100" onclick="event.stopPropagation();">View Profile <i class="ph ph-arrow-right"></i></a>
+          </div>
+        </div>'''
+    return JsonResponse({'html': html, 'count': users.count()})
 
 
 @login_required

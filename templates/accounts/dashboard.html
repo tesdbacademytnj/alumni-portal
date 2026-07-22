@@ -138,6 +138,7 @@
     <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
       <span class="tag-pill tag-pill-brand">{{ job.status|title }}</span>
       <span class="tag-pill"><i class="ph-fill ph-map-pin"></i> {{ job.city }}</span>
+      {% if job.published_at %}<span class="tag-pill"><i class="ph-fill ph-calendar-blank"></i> Posted {{ job.published_at|date:"d M Y" }}</span>{% endif %}
       {% if job.last_date_to_apply %}<span class="tag-pill tag-pill-gold"><i class="ph-fill ph-clock"></i> {{ job.last_date_to_apply|date:"d M Y" }}</span>{% endif %}
     </div>
   </a>

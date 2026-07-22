@@ -1453,7 +1453,8 @@ textarea.form-control { min-height: 120px; height: auto; }
 
 
 
-.job-card-applicants { font-size: 0.8rem; color: #DC2626; font-weight: 600; }
+.job-card-applicants { font-size: 0.8rem; color: #EA580C; font-weight: 600; }
+.job-posted-date { color: #16A34A; font-weight: 600; }
 
 .btn-know-more {
   background: var(--primary-main);

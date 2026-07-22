@@ -68,7 +68,7 @@
           <div class="col-md-6"><span class="detail-label">Last Date:</span> {{ job.last_date_to_apply|date:"d M Y"|default:"—" }}</div>
           <div class="col-md-6"><span class="detail-label">Opening Type:</span> {{ job.opening_type }}</div>
           {% if job.opening_type == 'Backdoor' %}
-          <div class="col-md-6"><span class="detail-label">Amount to Pay:</span> ₹{{ job.amount_to_pay }}</div>
+          <div class="col-md-6"><span class="detail-label">Amount to Pay:</span> {{ job.amount_to_pay }}</div>
           <div class="col-12"><span class="detail-label">Backdoor Description:</span> {{ job.backdoor_description|linebreaksbr }}</div>
           {% endif %}
         </div>

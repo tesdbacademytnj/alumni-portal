@@ -16,6 +16,7 @@ urlpatterns = [
     path('edit-profile/',            views.edit_profile,       name='edit_profile'),
     path('admin-dashboard/',         views.admin_dashboard,    name='admin_dashboard'),
     path('admin/user/<int:user_id>/',        views.user_detail,        name='user_detail'),
+    path('admin/search-users/',         views.admin_search_users,   name='admin_search_users'),
     path('admin/message/<int:message_id>/read/', views.mark_message_read, name='mark_message_read'),
     path('admin/job/<int:pk>/publish/',   views.publish_job,   name='publish_job'),
     path('admin/job/<int:pk>/reject/',    views.reject_job,    name='reject_job'),

@@ -104,7 +104,7 @@ class JobOpening(models.Model):
     last_date_to_apply    = models.DateField(null=True, blank=True)
     skills                = models.TextField(blank=True)
     opening_type          = models.CharField(max_length=20, choices=OPENING_TYPE_CHOICES, default='Regular')
-    amount_to_pay         = models.PositiveIntegerField(null=True, blank=True)
+    amount_to_pay         = models.CharField(max_length=200, blank=True, default='')
     backdoor_description  = models.TextField(blank=True)
     status                = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     published_at          = models.DateTimeField(null=True, blank=True)
