@@ -3,7 +3,7 @@
 {% block footer %}{% endblock %}
 {% block content %}
 {% if user.is_admin_user %}
-<div class="admin-navbar" style="margin:16px auto;max-width:1160px;">
+<div class="admin-navbar" style="margin:16px auto;">
   <a href="{% url 'job_board' %}" class="admin-nav-link"><i class="ph ph-arrow-left"></i> Job Board</a>
   <a href="{% url 'admin_dashboard' %}#tab-pending" class="admin-nav-link"><i class="ph ph-hourglass"></i> Pending</a>
   <a href="{% url 'admin_dashboard' %}#tab-openings" class="admin-nav-link"><i class="ph-fill ph-briefcase"></i> Openings</a>

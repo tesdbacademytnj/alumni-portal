@@ -103,7 +103,7 @@ def user_login(request):
     form = UserLoginForm()
     show_forgot_password = False
     if request.method == 'POST':
-        email    = request.POST.get('username')
+        email    = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
         if user and not user.is_admin_user:

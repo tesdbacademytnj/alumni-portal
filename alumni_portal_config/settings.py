@@ -104,6 +104,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# --- HTTPS / Security ---
+# Set SECURE_SSL_REDIRECT=True and SECURE_HSTS_SECONDS to a non-zero value
+# only after you have an SSL certificate installed on your server.
+# Start with HSTS=3600 for testing, then increase to 31536000 (1 year).
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
 LOGIN_URL = '/accounts/user-login/'
 LOGIN_REDIRECT_URL = '/jobs/board/'
 LOGOUT_REDIRECT_URL = '/'
